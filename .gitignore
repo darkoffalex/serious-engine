@@ -85,7 +85,5 @@ Sources/SeriousSkaStudio/Parser.cpp
 Sources/SeriousSkaStudio/Parser.h
 Sources/SeriousSkaStudio/Scanner.cpp
 
-
-
-
-
+# New MSVC-related generated files
+Sources/*/Release/
