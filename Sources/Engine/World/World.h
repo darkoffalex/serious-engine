@@ -93,10 +93,15 @@ public:
   ULONG wo_ulSpawnFlags;  // spawn flags telling in which game modes can the level be played
   CTString wo_strDescription; // description of the level (intro, mission, etc.)
 
+  CTString wo_strShaderVertexPath;
+  CTString wo_strShaderGeomPath;
+  CTString wo_strShaderFragPath;
+
   ULONG wo_ulNextEntityID;    // next free ID for entities
   CListHead wo_lhTimers;      // timer scheduled entities
   CListHead wo_lhMovers;        // entities that want to/have to move
   BOOL wo_bPortalLinksUpToDate; // set if portal-sector links are up to date
+  BOOL wo_bShaderLoaded; // Shader program instance created & loaded
 
   /* Initialize collision grid. */
   void InitCollisionGrid(void);
@@ -267,6 +272,9 @@ public:
 
   /* Load just world brushes from a file with entire world information. */
   void LoadBrushes_t(const CTFileName &fnmWorld); // throw char *
+
+  /* Loads and creates shader program instance if not loaded yet (called once on rendering) */
+  void LoadWorldShaderOnce(BOOL force = FALSE);
 
   /* Update sectors after brush vertex moving */
   void UpdateSectorsAfterVertexChange( CBrushVertexSelection &selVertex);

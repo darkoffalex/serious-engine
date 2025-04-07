@@ -948,6 +948,9 @@ void CRenderer::InitClippingRectangle(PIX pixMinI, PIX pixMinJ, PIX pixSizeI, PI
 void RenderView(CWorld &woWorld, CEntity &enViewer,
   CAnyProjection3D &prProjection, CDrawPort &dpDrawport)
 {
+  // Load world's shader if not loaded yet (once, beefore render)
+  woWorld.LoadWorldShaderOnce();
+  
   // let the worldbase execute its render function
   if (woWorld.wo_pecWorldBaseClass!=NULL
     &&woWorld.wo_pecWorldBaseClass->ec_pdecDLLClass!=NULL

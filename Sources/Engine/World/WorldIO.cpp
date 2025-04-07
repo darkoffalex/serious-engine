@@ -171,6 +171,20 @@ void CWorld::LoadBrushes_t(const CTFileName &fnmWorld) // throw char *
   ReadBrushes_t(&strmFile);
 }
 
+void CWorld::LoadWorldShaderOnce(BOOL force)
+{
+    if (!wo_bShaderLoaded || force)
+    {
+        // If paths set (may be default)
+        if (wo_strShaderVertexPath.Length() != 0 && wo_strShaderFragPath.Length() != 0)
+        {
+            // TODO: Load shaders
+        }
+
+        wo_bShaderLoaded = TRUE;
+    }
+}
+
 /*
  * Read world brushes from stream.
  */

@@ -90,6 +90,7 @@ CWorld::CWorld(void)
   , wo_baBrushes(*new CBrushArchive)
   , wo_taTerrains(*new CTerrainArchive)
   , wo_ulSpawnFlags(0)
+  , wo_bShaderLoaded(FALSE)
 {
   wo_baBrushes.ba_pwoWorld = this;
   wo_taTerrains.ta_pwoWorld = this;
@@ -125,6 +126,11 @@ CWorld::CWorld(void)
   wo_plThumbnailFocus = CPlacement3D( FLOAT3D(3.0f, 4.0f, 10.0f),
                              ANGLE3D(AngleDeg( 20.0f), AngleDeg( -20.0f), 0));
   wo_fThumbnailTargetDistance = 10.0f;
+
+  // Shader paths (hardcoded for now)
+  wo_strShaderVertexPath = "";
+  wo_strShaderGeomPath = "";
+  wo_strShaderFragPath = "";
 }
 
 /*
