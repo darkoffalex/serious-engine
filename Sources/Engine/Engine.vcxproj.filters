@@ -751,6 +751,9 @@
     <ClCompile Include="GameAgent\GameAgent.cpp">
       <Filter>Source Files\GameAgent</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Utils.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1367,6 +1370,12 @@
     </ClInclude>
     <ClInclude Include="Sound\ov_functions.h">
       <Filter>Header Files\Sound Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Utils.h">
+      <Filter>Header Files\Base Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\gl_functions_shaders.h">
+      <Filter>Header Files\Graphics Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -128,9 +128,9 @@ CWorld::CWorld(void)
   wo_fThumbnailTargetDistance = 10.0f;
 
   // Shader paths (hardcoded for now)
-  wo_strShaderVertexPath = "";
+  wo_strShaderVertexPath = "C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.vs";
   wo_strShaderGeomPath = "";
-  wo_strShaderFragPath = "";
+  wo_strShaderFragPath = "C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.vs";
 }
 
 /*

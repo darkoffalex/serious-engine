@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "stdh.h"
 
 #include <Engine/Base/Stream.h>
+#include <Engine/Base/Utils.h>
 #include <Engine/Math/Float.h>
 #include <Engine/World/World.h>
 #include <Engine/World/WorldEditingProfile.h>
@@ -178,6 +179,13 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
         // If paths set (may be default)
         if (wo_strShaderVertexPath.Length() != 0 && wo_strShaderFragPath.Length() != 0)
         {
+            // Load shader sources
+            auto vsSource = Utils::LoadFileAsText(wo_strShaderVertexPath.str_String);
+            auto fsSource = Utils::LoadFileAsText(wo_strShaderFragPath.str_String);
+
+            // Create shader modules & shader program
+            auto program = gfxCreateProgram();
+            // TODO: Maybe use wrapper class
             // TODO: Load shaders
         }
 
