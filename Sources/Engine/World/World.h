@@ -34,6 +34,7 @@ class CSurfaceType;
 class CContentType;
 class CEnvironmentType;
 class CIlluminationType;
+class CGfxShader;
 
 // mirroring types for mirror and stretch
 enum WorldMirrorType {
@@ -93,15 +94,17 @@ public:
   ULONG wo_ulSpawnFlags;  // spawn flags telling in which game modes can the level be played
   CTString wo_strDescription; // description of the level (intro, mission, etc.)
 
-  CTString wo_strShaderVertexPath;
-  CTString wo_strShaderGeomPath;
-  CTString wo_strShaderFragPath;
-
   ULONG wo_ulNextEntityID;    // next free ID for entities
   CListHead wo_lhTimers;      // timer scheduled entities
   CListHead wo_lhMovers;        // entities that want to/have to move
   BOOL wo_bPortalLinksUpToDate; // set if portal-sector links are up to date
   BOOL wo_bShaderLoaded; // Shader program instance created & loaded
+
+  CTFileName wo_fnmShaderVsFileName; // Vertex shader source path
+  CTFileName wo_fnmShaderGsFileName; // Geometry shader source path
+  CTFileName wo_fnmShaderFsFileName; // Fragment shader source path
+
+  CGfxShader* wo_pShader; // Shader wrapper pointer
 
   /* Initialize collision grid. */
   void InitCollisionGrid(void);

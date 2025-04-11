@@ -754,6 +754,9 @@
     <ClCompile Include="Base\Utils.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\GfxShader.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1375,6 +1378,9 @@
       <Filter>Header Files\Base Headers</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\gl_functions_shaders.h">
+      <Filter>Header Files\Graphics Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GfxShader.h">
       <Filter>Header Files\Graphics Headers</Filter>
     </ClInclude>
   </ItemGroup>

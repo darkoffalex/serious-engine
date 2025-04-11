@@ -30,6 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Network/Network.h>
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Terrain/Terrain.h>
+#include <Engine/Graphics/GfxShader.h>
 
 #define WORLDSTATEVERSION_NOCLASSCONTAINER 9
 #define WORLDSTATEVERSION_MULTITEXTURING 8
@@ -177,16 +178,27 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
     if (!wo_bShaderLoaded || force)
     {
         // If paths set (may be default)
-        if (wo_strShaderVertexPath.Length() != 0 && wo_strShaderFragPath.Length() != 0)
+        if (wo_fnmShaderVsFileName.Length() != 0 && wo_fnmShaderFsFileName.Length() != 0)
         {
-            // Load shader sources
-            auto vsSource = Utils::LoadFileAsText(wo_strShaderVertexPath.str_String);
-            auto fsSource = Utils::LoadFileAsText(wo_strShaderFragPath.str_String);
+            try
+            {
+                // Load shader sources
+                auto vsSource = Utils::LoadFileAsText(wo_fnmShaderVsFileName.str_String);
+                auto fsSource = Utils::LoadFileAsText(wo_fnmShaderFsFileName.str_String);
 
-            // Create shader modules & shader program
-            auto program = gfxCreateProgram();
-            // TODO: Maybe use wrapper class
-            // TODO: Load shaders
+                // Map of sources
+                std::unordered_map<UINT, std::string> shaderSources = {
+                    {GL_VERTEX_SHADER, vsSource},
+                    {GL_FRAGMENT_SHADER, fsSource}
+                };
+
+                // Load shader
+                wo_pShader = new CGfxShader(shaderSources);
+            }
+            catch (std::exception& ex)
+            {
+                FatalError("%s", ex.what());
+            }
         }
 
         wo_bShaderLoaded = TRUE;
