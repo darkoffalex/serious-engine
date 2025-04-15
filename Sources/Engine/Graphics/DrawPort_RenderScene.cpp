@@ -26,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/GfxProfile.h>
 #include <Engine/Graphics/ShadowMap.h>
 #include <Engine/Graphics/Fog_internal.h>
+#include <Engine/Graphics/GfxShader.h>
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Brushes/BrushTransformed.h>
 
@@ -1260,8 +1261,8 @@ static void RSStartupHaze(void)
 
 
 // process one group of polygons
-void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags);
-void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedFlags)
+void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CGfxShader* pShader = nullptr);
+void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedFlags, CGfxShader* pShader = nullptr)
 {
   // skip if the group is empty
   if( pspoGroup==NULL) return;
@@ -1281,10 +1282,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByDualTexturing( pspoGroup, 0, SHADOWTEXTURE, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pShader);
       ulGroupFlags &= ~(GF_TX0|GF_SHD);
       ulGroupFlags |=   GF_TX0_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pShader);
       return;
     }
 
@@ -1297,10 +1298,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByDualTexturing( pspoGroup, 0, 1, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX1;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pShader);
       ulGroupFlags &= ~(GF_TX0|GF_TX1);
       ulGroupFlags |=   GF_TX0_TX1;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pShader);
       return;
     }
 
@@ -1314,10 +1315,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByDualTexturing( pspoGroup, 0, 2, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX2;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pShader);
       ulGroupFlags &= ~(GF_TX0|GF_TX2);
       ulGroupFlags |=   GF_TX0_TX2;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pShader);
       return;
     }
 
@@ -1331,10 +1332,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByDualTexturing( pspoGroup, 2, SHADOWTEXTURE, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX2_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pShader);
       ulGroupFlags &= ~(GF_TX2|GF_SHD);
       ulGroupFlags |=   GF_TX2_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pShader);
       return;
     }
   }
@@ -1351,10 +1352,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByQuadTexturing( pspoGroup, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX1_TX2_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pShader);
       ulGroupFlags &= ~(GF_TX0_TX1|GF_TX2_SHD);
       ulGroupFlags |=   GF_TX0_TX1_TX2_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pShader);
       return;
     }
   } 
@@ -1371,10 +1372,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByTripleTexturing( pspoGroup, 1, 2, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX1_TX2;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pShader);
       ulGroupFlags &= ~(GF_TX0_TX1|GF_TX2);
       ulGroupFlags |=   GF_TX0_TX1_TX2;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pShader);
       return;
     }
 
@@ -1388,10 +1389,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByTripleTexturing( pspoGroup, 1, SHADOWTEXTURE, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX1_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pShader);
       ulGroupFlags &= ~(GF_TX0_TX1|GF_SHD);
       ulGroupFlags |=   GF_TX0_TX1_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pShader);
       return;
     }
 
@@ -1405,10 +1406,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByTripleTexturing( pspoGroup, 2, SHADOWTEXTURE, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX2_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pShader);
       ulGroupFlags &= ~(GF_TX0_TX2|GF_SHD);
       ulGroupFlags |=   GF_TX0_TX2_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pShader);
       return;
     }
   }
@@ -1423,7 +1424,7 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
   // if unlimited lock count
   if( iMaxBurstSize==0)
   { // render whole group
-    RSRenderGroupInternal( pspoGroup, ulGroupFlags);
+    RSRenderGroupInternal( pspoGroup, ulGroupFlags, pShader);
   }
   // if lock count is specified
   else
@@ -1439,7 +1440,7 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
         pspoGroup = pspoGroup->spo_pspoSucc;
       } // render one group segment
       pspoLast->spo_pspoSucc = NULL;
-      RSRenderGroupInternal( pspoThis, ulGroupFlags);
+      RSRenderGroupInternal( pspoThis, ulGroupFlags, pShader);
     }
   }
 }
@@ -1447,7 +1448,7 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
 
 
 // internal group rendering routine
-void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
+void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CGfxShader* pShader)
 {
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_RS_RENDERGROUPINTERNAL);
   _pfGfxProfile.IncrementCounter( CGfxProfile::PCI_RS_POLYGONGROUPS);
@@ -1577,6 +1578,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
     DrawAllElements( pspoGroup);
   }   
 
+  // Enable world's shader if exist
+  if (pShader)
+  {
+      gfxUseProgram(pShader->Id());
+  }
+
   // if group has texture for first layer
   if( ulGroupFlags&GF_TX0) {
     // render texture 0
@@ -1610,6 +1617,11 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
     RSSetTextureCoords( pspoGroup, SHADOWTEXTURE, 0);
     RSSetTextureColors( pspoGroup, GF_SHD);
     RSRenderSHD( pspoGroup);
+  }
+
+  if (pShader)
+  {
+      gfxUseProgram(0);
   }
 
   // if group has aftershadow texture for second layer
@@ -1703,7 +1715,7 @@ static void RSEnd(void)
 
 
 void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prProjection,
-                  COLOR colSelection, BOOL bTranslucent)
+                  COLOR colSelection, BOOL bTranslucent, CGfxShader* pGfxShader)
 {
   // check API
   eAPI = _pGfx->gl_eCurrentAPI;
@@ -1778,7 +1790,7 @@ void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prP
   for( INDEX iGroup=1; iGroup<_ctGroupsCount; iGroup++) {
     // get the group polygon list and render it if not empty
     ScenePolygon *pspoGroup = _apspoGroups[iGroup];
-    if( pspoGroup!=NULL) RSRenderGroup( pspoGroup, iGroup, 0);
+    if( pspoGroup!=NULL) RSRenderGroup( pspoGroup, iGroup, 0, pGfxShader);
   }
   _pfGfxProfile.StopTimer( CGfxProfile::PTI_RS_RENDERGROUP);
 

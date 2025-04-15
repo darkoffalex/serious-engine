@@ -73,9 +73,12 @@ struct ScenePolygon {
   void *spo_pvPolygon;     // user data for high level renderer (brush polygon)
 };
 
+// forward declaration for shader class
+class CGfxShader;
+
 // renders whole scene (all visible polygons) to screen drawport
 void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prProjection,
-                  COLOR colSelection, BOOL bTranslucent);
+                  COLOR colSelection, BOOL bTranslucent, CGfxShader* pGfxShader = nullptr);
 // renders only scene z-buffer
 void RenderSceneZOnly( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prProjection);
 // renders flat background of the scene

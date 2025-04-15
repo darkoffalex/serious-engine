@@ -584,7 +584,7 @@ void CRenderer::DrawToScreen(void)
     re_prProjection->Prepare();
     _pfRenderProfile.StartTimer(CRenderProfile::PTI_RENDERSCENE);
     CPerspectiveProjection3D *pprPerspective = (CPerspectiveProjection3D*)(CProjection3D*)re_prProjection;
-    RenderScene( re_pdpDrawPort, re_pspoFirst, re_prProjection, re_colSelection, FALSE);
+    RenderScene( re_pdpDrawPort, re_pspoFirst, re_prProjection, re_colSelection, FALSE, re_pwoWorld->wo_pShader);
     _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
   }
 
