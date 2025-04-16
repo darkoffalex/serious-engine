@@ -80,9 +80,9 @@ UINT CGfxShader::Id() const
 	return sha_uiId;
 }
 
-std::vector<int> CGfxShader::UniformIds(const std::vector<std::string>& names) const
+std::vector<INT32> CGfxShader::UniformIds(const std::vector<std::string>& names) const
 {
-	std::vector<int> ids(names.size());
+	std::vector<INT32> ids(names.size());
 
 	for (size_t i = 0; i < names.size(); i++)
 	{

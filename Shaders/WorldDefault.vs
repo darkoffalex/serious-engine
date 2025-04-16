@@ -1,9 +1,13 @@
 #version 460 compatibility
 
-out vec4 vertexColor;
+out VS_OUT {
+    vec2 uv;
+    vec4 color;
+} vs_out;
 
-void main() 
+void main()
 {
     gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-    vertexColor = gl_Color;
+    vs_out.uv = gl_MultiTexCoord0.xy;
+    vs_out.color = gl_Color;
 }

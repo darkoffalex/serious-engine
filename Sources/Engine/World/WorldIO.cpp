@@ -194,6 +194,27 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
 
                 // Load shader
                 wo_pShader = new CGfxShader(shaderSources);
+
+                // Get uniform IDs
+                auto uniformIds = wo_pShader->UniformIds({
+                    "tex0",
+                    "tex1",
+                    "tex2",
+                    "texShadow",
+                    "texSpec",
+                    "texNormal",
+                    "texHeight"
+                });
+
+                // Map uniform ids to structure
+                wo_sShaderUniformIds.wsu_iSurfaceCol = uniformIds[0];
+                wo_sShaderUniformIds.wsu_iTex0 = uniformIds[1];
+                wo_sShaderUniformIds.wsu_iTex1 = uniformIds[2];
+                wo_sShaderUniformIds.wsu_iTex2 = uniformIds[3];
+                wo_sShaderUniformIds.wsu_iTexShadow = uniformIds[4];
+                wo_sShaderUniformIds.wsu_iTexSpec = uniformIds[5];
+                wo_sShaderUniformIds.wsu_iTexNormal = uniformIds[6];
+                wo_sShaderUniformIds.wsu_iTexHeight = uniformIds[7];
             }
             catch (std::exception& ex)
             {

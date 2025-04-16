@@ -17,7 +17,7 @@ public:
 	CGfxShader& operator=(CGfxShader&& other) noexcept;
 
 	UINT Id() const;
-	std::vector<int> UniformIds(const std::vector<std::string>& names) const;
+	std::vector<INT32> UniformIds(const std::vector<std::string>& names) const;
 
 private:
 	static UINT ComplieShaderSource(UINT type, const std::string& shaderSource);

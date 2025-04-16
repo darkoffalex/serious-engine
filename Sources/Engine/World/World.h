@@ -44,6 +44,19 @@ enum WorldMirrorType {
   WMT_Z,
 };
 
+// Shader uniform IDs
+struct SWorldShaderUniforms
+{
+    INT32 wsu_iTex0;
+    INT32 wsu_iTex1;
+    INT32 wsu_iTex2;
+    INT32 wsu_iTexShadow;
+    INT32 wsu_iTexSpec;
+    INT32 wsu_iTexNormal;
+    INT32 wsu_iTexHeight;
+    INT32 wsu_iSurfaceCol;
+};
+
 class ENGINE_API CWorld {
 public:
 // implementation:
@@ -105,6 +118,7 @@ public:
   CTFileName wo_fnmShaderFsFileName; // Fragment shader source path
 
   CGfxShader* wo_pShader; // Shader wrapper pointer
+  SWorldShaderUniforms wo_sShaderUniformIds; // Shader uniform IDs (retrieved at loading)
 
   /* Initialize collision grid. */
   void InitCollisionGrid(void);
