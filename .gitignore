@@ -62,6 +62,8 @@ Data/*.pri
 Data/*.bin
 Scripts/PersistentSymbols.ini
 SaveGame/*
+Textures/*
+TexturesMP/*
 
 # Shader files
 !Shaders/*

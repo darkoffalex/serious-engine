@@ -621,7 +621,7 @@ void CRenderer::DrawToScreen(void)
     CPerspectiveProjection3D *pprPerspective = (CPerspectiveProjection3D*)(CProjection3D*)re_prProjection;
     pprPerspective->Prepare();
     RenderScene( re_pdpDrawPort, SortTranslucentPolygons(re_pspoFirstTranslucent),
-                 re_prProjection, re_colSelection, TRUE);
+                 re_prProjection, re_colSelection, TRUE, re_pwoWorld);
     _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
   }
 

@@ -207,14 +207,13 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
                 });
 
                 // Map uniform ids to structure
-                wo_sShaderUniformIds.wsu_iSurfaceCol = uniformIds[0];
-                wo_sShaderUniformIds.wsu_iTex0 = uniformIds[1];
-                wo_sShaderUniformIds.wsu_iTex1 = uniformIds[2];
-                wo_sShaderUniformIds.wsu_iTex2 = uniformIds[3];
-                wo_sShaderUniformIds.wsu_iTexShadow = uniformIds[4];
-                wo_sShaderUniformIds.wsu_iTexSpec = uniformIds[5];
-                wo_sShaderUniformIds.wsu_iTexNormal = uniformIds[6];
-                wo_sShaderUniformIds.wsu_iTexHeight = uniformIds[7];
+                wo_sShaderUniformIds.wsu_iTex0 = uniformIds[0];
+                wo_sShaderUniformIds.wsu_iTex1 = uniformIds[1];
+                wo_sShaderUniformIds.wsu_iTex2 = uniformIds[2];
+                wo_sShaderUniformIds.wsu_iTexShadow = uniformIds[3];
+                wo_sShaderUniformIds.wsu_iTexSpec = uniformIds[4];
+                wo_sShaderUniformIds.wsu_iTexNormal = uniformIds[5];
+                wo_sShaderUniformIds.wsu_iTexHeight = uniformIds[6];
             }
             catch (std::exception& ex)
             {

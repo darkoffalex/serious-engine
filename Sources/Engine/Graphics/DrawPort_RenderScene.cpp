@@ -1467,32 +1467,63 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
   else gfxDisableAlphaTest();
   
   _iLastUnit = 0; // reset mulitex unit change
+  BOOL bUsedShader = FALSE;
   BOOL bUsedMT = FALSE;
   BOOL bUsesMT = ulGroupFlags & (GF_TX0_TX1 | GF_TX0_TX2 | GF_TX0_SHD | GF_TX2_SHD 
                               |  GF_TX0_TX1_TX2 | GF_TX0_TX1_SHD | GF_TX0_TX2_SHD
                               |  GF_TX0_TX1_TX2_SHD);
+
+  // check for shader, use if set
+  if (pWorld && pWorld->wo_pShader)
+  {
+      gfxUseProgram(pWorld->wo_pShader->Id());
+      bUsedShader = TRUE;
+  }
+
   // dual texturing
-  if( ulGroupFlags & GF_TX0_SHD) {
-    RSSetTextureCoords( pspoGroup, SHADOWTEXTURE, 1);
-    RSSetTextureCoords( pspoGroup, 0, 0);
-    RSSetTextureColors( pspoGroup, GF_TX0|GF_SHD);
-    RSRenderTEX_SHD( pspoGroup, 0);
-    bUsedMT = TRUE;
+  if (ulGroupFlags & GF_TX0_SHD) {
+      RSSetTextureCoords(pspoGroup, SHADOWTEXTURE, 1);
+      RSSetTextureCoords(pspoGroup, 0, 0);
+      RSSetTextureColors(pspoGroup, GF_TX0 | GF_SHD);
+
+      if (bUsedShader)
+      {
+          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 1);
+      }
+
+      RSRenderTEX_SHD(pspoGroup, 0);
+      bUsedMT = TRUE;
   }
-  else if( ulGroupFlags & GF_TX0_TX1) {
-    RSSetTextureCoords( pspoGroup, 1, 1);
-    RSSetTextureCoords( pspoGroup, 0, 0);
-    RSSetTextureColors( pspoGroup, GF_TX0|GF_TX1);
-    RSRender2TEX( pspoGroup, 1);
-    bUsedMT = TRUE;
-  } 
-  else if( ulGroupFlags & GF_TX0_TX2) {
-    RSSetTextureCoords( pspoGroup, 2, 1);
-    RSSetTextureCoords( pspoGroup, 0, 0);
-    RSSetTextureColors( pspoGroup, GF_TX0|GF_TX2);
-    RSRender2TEX( pspoGroup, 2);
-    bUsedMT = TRUE;
+  else if (ulGroupFlags & GF_TX0_TX1) {
+      RSSetTextureCoords(pspoGroup, 1, 1);
+      RSSetTextureCoords(pspoGroup, 0, 0);
+      RSSetTextureColors(pspoGroup, GF_TX0 | GF_TX1);
+
+      if (bUsedShader)
+      {
+          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
+      }
+
+      RSRender2TEX(pspoGroup, 1);
+      bUsedMT = TRUE;
   }
+  else if (ulGroupFlags & GF_TX0_TX2) {
+      RSSetTextureCoords(pspoGroup, 2, 1);
+      RSSetTextureCoords(pspoGroup, 0, 0);
+
+      if (bUsedShader)
+      {
+          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
+      }
+
+      RSSetTextureColors(pspoGroup, GF_TX0 | GF_TX2);
+      RSRender2TEX(pspoGroup, 2);
+      bUsedMT = TRUE;
+  }
+
 
   // triple texturing
   else if( ulGroupFlags & GF_TX0_TX1_TX2) {
@@ -1500,6 +1531,14 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     RSSetTextureCoords( pspoGroup, 1, 1);
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0|GF_TX1|GF_TX2);
+
+    if (bUsedShader)
+    {
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex2, 2);
+    }
+
     RSRender3TEX( pspoGroup);
     bUsedMT = TRUE;
   }
@@ -1508,6 +1547,14 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     RSSetTextureCoords( pspoGroup, 1, 1);
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0|GF_TX1|GF_SHD);
+
+    if (bUsedShader)
+    {
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 2);
+    }
+
     RSRender2TEX_SHD( pspoGroup, 1);
     bUsedMT = TRUE;
   }
@@ -1516,6 +1563,14 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     RSSetTextureCoords( pspoGroup, 2, 1);
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0|GF_TX2|GF_SHD);
+
+    if (bUsedShader)
+    {
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 2);
+    }
+
     RSRender2TEX_SHD( pspoGroup, 2);
     bUsedMT = TRUE;
   }
@@ -1527,6 +1582,15 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     RSSetTextureCoords( pspoGroup, 1, 1);
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0|GF_TX1|GF_TX2|GF_SHD);
+
+    if (bUsedShader)
+    {
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex2, 2);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 3);
+    }
+
     RSRender3TEX_SHD( pspoGroup);
     bUsedMT = TRUE;
   }
@@ -1543,6 +1607,13 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     RSSetTextureCoords( pspoGroup, SHADOWTEXTURE, 1);
     RSSetTextureCoords( pspoGroup, 2, 0);
     RSSetTextureColors( pspoGroup, GF_TX2|GF_SHD);
+
+    if (bUsedShader)
+    {
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 1);
+    }
+
     RSRenderTEX_SHD( pspoGroup, 2);
     bUsedMT = TRUE;
   }
@@ -1579,23 +1650,13 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     DrawAllElements( pspoGroup);
   }   
 
-  // Enable world's shader if exist
-  bool bShader = false;
-  if (pWorld && pWorld->wo_pShader)
-  {
-      // Enable shader
-      gfxUseProgram(pWorld->wo_pShader->Id());
-      bShader = true;
-  }
-
   // if group has texture for first layer
   if( ulGroupFlags&GF_TX0) {
     // render texture 0
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0);
 
-    // Bind texture unit to shader uniform (if using shader)
-    if (bShader)
+    if (bUsedShader)
     {
         gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
     }
@@ -1608,22 +1669,38 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     }
   }
 
-  /*
   // if group has texture for second layer
   if( ulGroupFlags & GF_TX1) {
     // render texture 1
     RSSetTextureCoords( pspoGroup, 1, 0);
     RSSetTextureColors( pspoGroup, GF_TX1);
+
+    if (bUsedShader)
+    {
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+    }
+
     RSRenderTEX( pspoGroup, 1);
   }
 
-  
   // if group has texture for third layer
   if( ulGroupFlags & GF_TX2) {
     // render texture 2
     RSSetTextureCoords( pspoGroup, 2, 0);
     RSSetTextureColors( pspoGroup, GF_TX2);
+
+    if (bUsedShader)
+    {
+        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+    }
+
     RSRenderTEX( pspoGroup, 2);
+  }
+
+  // Disable shader if used
+  if (bUsedShader)
+  {
+      gfxUseProgram(0);
   }
 
   // if group has shadow
@@ -1632,13 +1709,6 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     RSSetTextureCoords( pspoGroup, SHADOWTEXTURE, 0);
     RSSetTextureColors( pspoGroup, GF_SHD);
     RSRenderSHD( pspoGroup);
-  }
-  */
-
-  // Disable wor;d's shader if enabled
-  if (bShader)
-  {
-      gfxUseProgram(0);
   }
 
   // if group has aftershadow texture for second layer

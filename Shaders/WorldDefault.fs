@@ -11,11 +11,13 @@ uniform sampler2D texNormal;
 uniform sampler2D texHeight;
 
 in VS_OUT {
-    vec2 uv;
+    vec2 uv[3];
     vec4 color;
 } fs_in;
 
 void main() {
-    vec4 texColor = texture2D(tex0, fs_in.uv);
-    fragColor = texColor * fs_in.color;
+    // TODO: Take in accaount various blending modes & texture layers
+    vec4 texColor0 = texture2D(tex0, fs_in.uv[0]);
+    vec4 texColor1 = texture2D(tex1, fs_in.uv[1]);
+    fragColor = mix(texColor0, texColor1, 0.5f) * fs_in.color;
 }
