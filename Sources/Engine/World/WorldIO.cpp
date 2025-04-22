@@ -197,23 +197,29 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
 
                 // Get uniform IDs
                 auto uniformIds = wo_pShader->UniformIds({
-                    "tex0",
-                    "tex1",
-                    "tex2",
-                    "texShadow",
-                    "texSpec",
-                    "texNormal",
-                    "texHeight"
+                    "texLayer0",     // 0
+                    "texLayer1",     // 1
+                    "texLayer2",     // 2
+                    "texShadow",     // 3
+                    "texSpec",       // 4
+                    "texNormal",     // 5
+                    "texHeight",     // 6
+                    "activeLayers",  // 7
+                    "blendTypes",    // 8
+                    "useShadow"      // 9
                 });
 
                 // Map uniform ids to structure
-                wo_sShaderUniformIds.wsu_iTex0 = uniformIds[0];
-                wo_sShaderUniformIds.wsu_iTex1 = uniformIds[1];
-                wo_sShaderUniformIds.wsu_iTex2 = uniformIds[2];
-                wo_sShaderUniformIds.wsu_iTexShadow = uniformIds[3];
-                wo_sShaderUniformIds.wsu_iTexSpec = uniformIds[4];
-                wo_sShaderUniformIds.wsu_iTexNormal = uniformIds[5];
-                wo_sShaderUniformIds.wsu_iTexHeight = uniformIds[6];
+                wo_sShaderUniformIds.wsu_iTexLayer0      = uniformIds[0];
+                wo_sShaderUniformIds.wsu_iTexLayer1      = uniformIds[1];
+                wo_sShaderUniformIds.wsu_iTexLayer2      = uniformIds[2];
+                wo_sShaderUniformIds.wsu_iTexShadow      = uniformIds[3];
+                wo_sShaderUniformIds.wsu_iTexSpec        = uniformIds[4];
+                wo_sShaderUniformIds.wsu_iTexNormal      = uniformIds[5];
+                wo_sShaderUniformIds.wsu_iTexHeight      = uniformIds[6];
+                wo_sShaderUniformIds.wsu_iActiveLayers   = uniformIds[7];
+                wo_sShaderUniformIds.wsu_iLayersBlending = uniformIds[8];
+                wo_sShaderUniformIds.wsu_iUseShadow      = uniformIds[9];
             }
             catch (std::exception& ex)
             {

@@ -29,3 +29,15 @@ DLLFUNCTION(OGL, GLint, glGetUniformLocation, (GLuint program, const GLchar* nam
 DLLFUNCTION(OGL, void, glUniformMatrix4fv, (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value), 0, 1);
 
 DLLFUNCTION(OGL, void, glUniform1i, (GLint location, GLint v0), 0, 1);
+
+DLLFUNCTION(OGL, void, glUniform1iv, (GLint location, GLsizei count, const GLint* value), 0, 1);
+
+DLLFUNCTION(OGL, void, glUniform1fv, (GLint location, GLsizei count, const GLfloat* value), 0, 1);
+
+DLLFUNCTION(OGL, void, glUniform2fv, (GLint location, GLsizei count, const GLfloat* value), 0, 1);
+
+DLLFUNCTION(OGL, void, glUniform3fv, (GLint location, GLsizei count, const GLfloat* value), 0, 1);
+
+DLLFUNCTION(OGL, void, glUniform4fv, (GLint location, GLsizei count, const GLfloat* value), 0, 1);
+
+DLLFUNCTION(OGL, void, glUniformMatrix3fv, (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value), 0, 1);

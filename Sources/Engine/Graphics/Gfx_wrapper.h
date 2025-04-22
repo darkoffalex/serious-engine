@@ -259,6 +259,12 @@ extern void (*gfxGetProgramInfoLog)(UINT program, INT32 maxLength, INT32* length
 extern INT32(*gfxGetUniformLocation)(UINT program, const CHAR* name);
 extern void (*gfxUniformMatrix4fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value);
 extern void (*gfxUniform1i)(INT32 location, INT32 v0);
+extern void (*gfxUniform1iv)(INT32 location, INT32 count, const INT32* value);
+extern void (*gfxUniform1fv)(INT32 location, INT32 count, const FLOAT* value);
+extern void (*gfxUniform2fv)(INT32 location, INT32 count, const FLOAT* value);
+extern void (*gfxUniform3fv)(INT32 location, INT32 count, const FLOAT* value);
+extern void (*gfxUniform4fv)(INT32 location, INT32 count, const FLOAT* value);
+extern void (*gfxUniformMatrix3fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value);
 
 // MISC
 

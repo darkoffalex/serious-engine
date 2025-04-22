@@ -1319,3 +1319,57 @@ static void ogl_Uniform1i(INT32 location, INT32 v0) {
     OGL_CHECKERROR;
     _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
+
+// Set an array of integers
+static void ogl_Uniform1iv(INT32 location, INT32 count, const INT32 * value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform1iv((GLint)location, (GLsizei)count, (const GLint*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of floats
+static void ogl_Uniform1fv(INT32 location, INT32 count, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform1fv((GLint)location, (GLsizei)count, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of vec2
+static void ogl_Uniform2fv(INT32 location, INT32 count, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform2fv((GLint)location, (GLsizei)count, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of vec3
+static void ogl_Uniform3fv(INT32 location, INT32 count, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform3fv((GLint)location, (GLsizei)count, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of vec4
+static void ogl_Uniform4fv(INT32 location, INT32 count, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform4fv((GLint)location, (GLsizei)count, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of 3x3 matrices
+static void ogl_UniformMatrix3fv(INT32 location, INT32 count, BOOL transpose, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniformMatrix3fv((GLint)location, (GLsizei)count, (GLboolean)transpose, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}

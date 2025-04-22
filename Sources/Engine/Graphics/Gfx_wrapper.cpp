@@ -153,6 +153,12 @@ extern void (*gfxGetProgramInfoLog)(UINT program, INT32 maxLength, INT32* length
 extern INT32(*gfxGetUniformLocation)(UINT program, const CHAR* name) = NULL;
 extern void (*gfxUniformMatrix4fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value) = NULL;
 extern void (*gfxUniform1i)(INT32 location, INT32 v0) = NULL;
+extern void (*gfxUniform1iv)(INT32 location, INT32 count, const INT32* value) = NULL;
+extern void (*gfxUniform1fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
+extern void (*gfxUniform2fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
+extern void (*gfxUniform3fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
+extern void (*gfxUniform4fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
+extern void (*gfxUniformMatrix3fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value) = NULL;
 
 
 
@@ -815,6 +821,12 @@ extern void GFX_SetFunctionPointers( INDEX iAPI)
     gfxGetUniformLocation   = &ogl_GetUniformLocation;
     gfxUniformMatrix4fv     = &ogl_UniformMatrix4fv;
     gfxUniform1i            = &ogl_Uniform1i;
+    gfxUniform1iv           = &ogl_Uniform1iv;
+    gfxUniform1fv           = &ogl_Uniform1fv;
+    gfxUniform2fv           = &ogl_Uniform2fv;
+    gfxUniform3fv           = &ogl_Uniform3fv;
+    gfxUniform4fv           = &ogl_Uniform4fv;
+    gfxUniformMatrix3fv     = &ogl_UniformMatrix3fv;
   }
   // Direct3D?
 #ifdef SE1_D3D

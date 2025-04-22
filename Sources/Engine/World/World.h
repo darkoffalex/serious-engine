@@ -47,14 +47,16 @@ enum WorldMirrorType {
 // Shader uniform IDs
 struct SWorldShaderUniforms
 {
-    INT32 wsu_iTex0;
-    INT32 wsu_iTex1;
-    INT32 wsu_iTex2;
+    INT32 wsu_iTexLayer0;
+    INT32 wsu_iTexLayer1;
+    INT32 wsu_iTexLayer2;
     INT32 wsu_iTexShadow;
     INT32 wsu_iTexSpec;
     INT32 wsu_iTexNormal;
     INT32 wsu_iTexHeight;
-    INT32 wsu_iSurfaceCol;
+    INT32 wsu_iLayersBlending;
+    INT32 wsu_iActiveLayers;
+    INT32 wsu_iUseShadow;
 };
 
 class ENGINE_API CWorld {

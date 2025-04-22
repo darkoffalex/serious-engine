@@ -1446,7 +1446,123 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
   }
 }
 
+void RSUpdateShaderUniforms(const SWorldShaderUniforms& rsUniforms, ScenePolygon* pspoGroup, ULONG ulGroupFlags)
+{
+    // Prepare data for shader variables
+    INT32 iaTextures[3] = { -1, -1, -1 };
+    INT32 iaBlendings[3] = { 0, 0, 0 };
+    INT32 iShadowTexture = -1;
+    INT32 iActiveLayersCount = 0;
+    INT32 iShadowUsed = 0;
 
+    // layers 0 + shadow
+    if (ulGroupFlags & GF_TX0_SHD)
+    {
+        iaTextures[0] = 0;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iActiveLayersCount = 1;
+    }
+    // layers 0, 1
+    else if (ulGroupFlags & GF_TX0_TX1)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[1];
+        iActiveLayersCount = 2;
+    }
+    // layers 0, 1 + shadow
+    else if (ulGroupFlags & GF_TX0_TX1_SHD)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[1];
+        iShadowTexture = 2;
+        iShadowUsed = (INT32)TRUE;
+        iActiveLayersCount = 2;
+    }
+    // layers 0, 2
+    else if (ulGroupFlags & GF_TX0_TX2)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[2];
+        iActiveLayersCount = 2;
+    }
+    // layers 0, 2 + shadow
+    else if (ulGroupFlags & GF_TX0_TX2_SHD)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[2];
+        iShadowTexture = 2;
+        iShadowUsed = (INT32)TRUE;
+        iActiveLayersCount = 2;
+    }
+    // layers 0, 1, 2
+    else if (ulGroupFlags & GF_TX0_TX1_TX2)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaTextures[2] = 2;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[1];
+        iaBlendings[2] = pspoGroup->spo_aubTextureFlags[2];
+        iActiveLayersCount = 3;
+    }
+    // layers 0, 1, 2 + shadow
+    else if (ulGroupFlags & GF_TX0_TX1_TX2_SHD)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaTextures[2] = 2;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[1];
+        iaBlendings[2] = pspoGroup->spo_aubTextureFlags[2];
+        iShadowTexture = 4;
+        iShadowUsed = (INT32)TRUE;
+        iActiveLayersCount = 3;
+    }
+    else if (ulGroupFlags & GF_TX0)
+    {
+        iaTextures[0] = 0;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iActiveLayersCount = 1;
+    }
+    else if (ulGroupFlags & GF_TX1)
+    {
+        iaTextures[0] = 0;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[1];
+        iActiveLayersCount = 1;
+    }
+    else if (ulGroupFlags & GF_TX2)
+    {
+        iaTextures[0] = 0;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[2];
+        iActiveLayersCount = 1;
+    }
+    else if (ulGroupFlags & GF_SHD)
+    {
+        iShadowTexture = 0;
+        iShadowUsed = (INT32)TRUE;
+    }
+
+    // Texture units & blending for each layer
+    gfxUniform1i(rsUniforms.wsu_iTexLayer0, iaTextures[0]);
+    gfxUniform1i(rsUniforms.wsu_iTexLayer1, iaTextures[1]);
+    gfxUniform1i(rsUniforms.wsu_iTexLayer2, iaTextures[2]);
+    gfxUniform1iv(rsUniforms.wsu_iLayersBlending, 3, iaBlendings);
+
+    // Shadow texture
+    gfxUniform1i(rsUniforms.wsu_iTexShadow, iShadowTexture);
+    gfxUniform1i(rsUniforms.wsu_iUseShadow, iShadowUsed);
+
+    // Layer count (except shadow layer)
+    gfxUniform1i(rsUniforms.wsu_iActiveLayers, iActiveLayersCount);
+}
 
 // internal group rendering routine
 void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld* pWorld)
@@ -1488,8 +1604,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
       if (bUsedShader)
       {
-          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
-          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 1);
+          RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX0_SHD);
       }
 
       RSRenderTEX_SHD(pspoGroup, 0);
@@ -1502,8 +1617,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
       if (bUsedShader)
       {
-          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
-          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
+          RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX0_TX1);
       }
 
       RSRender2TEX(pspoGroup, 1);
@@ -1515,8 +1629,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
       if (bUsedShader)
       {
-          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
-          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
+          RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX0_TX2);
       }
 
       RSSetTextureColors(pspoGroup, GF_TX0 | GF_TX2);
@@ -1534,9 +1647,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex2, 2);
+        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX0_TX1_TX2);
     }
 
     RSRender3TEX( pspoGroup);
@@ -1550,9 +1661,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 2);
+        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX0_TX1_SHD);
     }
 
     RSRender2TEX_SHD( pspoGroup, 1);
@@ -1566,9 +1675,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 2);
+        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX0_TX2_SHD);
     }
 
     RSRender2TEX_SHD( pspoGroup, 2);
@@ -1585,10 +1692,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex1, 1);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex2, 2);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 3);
+        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX0_TX1_TX2_SHD);
     }
 
     RSRender3TEX_SHD( pspoGroup);
@@ -1610,8 +1714,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTexShadow, 1);
+        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX2_SHD);
     }
 
     RSRenderTEX_SHD( pspoGroup, 2);
@@ -1658,7 +1761,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX0);
     }
 
     RSRenderTEX( pspoGroup, 0);
@@ -1677,7 +1780,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX1);
     }
 
     RSRenderTEX( pspoGroup, 1);
@@ -1691,7 +1794,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iTex0, 0);
+        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, GF_TX2);
     }
 
     RSRenderTEX( pspoGroup, 2);
