@@ -315,6 +315,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClCompile Include="Base\Utils.cpp" />
     <ClCompile Include="GameAgent\GameAgent.cpp" />
     <ClCompile Include="Graphics\GfxShader.cpp" />
+    <ClCompile Include="Graphics\GfxUniformBuffer.cpp" />
     <ClCompile Include="Math\Float.cpp" />
     <ClCompile Include="Math\Functions.cpp" />
     <ClCompile Include="Math\Geometry.cpp">
@@ -745,6 +746,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClInclude Include="GameAgent\GameAgent.h" />
     <ClInclude Include="GameAgent\MSLegacy.h" />
     <ClInclude Include="Graphics\GfxShader.h" />
+    <ClInclude Include="Graphics\GfxUniformBuffer.h" />
     <ClInclude Include="Graphics\gl_functions_shaders.h" />
     <ClInclude Include="Math\AABBox.h" />
     <ClInclude Include="Math\FixInt.h" />

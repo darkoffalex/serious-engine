@@ -1373,3 +1373,48 @@ static void ogl_UniformMatrix3fv(INT32 location, INT32 count, BOOL transpose, co
     OGL_CHECKERROR;
     _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
+
+// Generate buffers
+static void ogl_GenBuffers(INT32 n, UINT* buffers) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglGenBuffers((GLsizei)n, (GLuint*)buffers);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Bind a buffer
+static void ogl_BindBuffer(UINT target, UINT buffer) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglBindBuffer((GLenum)target, (GLuint)buffer);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Specify buffer data
+static void ogl_BufferData(UINT target, SLONG size, const void* data, UINT usage) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglBufferData((GLenum)target, (GLsizeiptr)size, data, (GLenum)usage);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Bind a buffer to an indexed target
+static void ogl_BindBufferBase(UINT target, UINT index, UINT buffer) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglBindBufferBase((GLenum)target, (GLuint)index, (GLuint)buffer);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Delete buffers
+static void ogl_DeleteBuffers(INT32 n, const UINT* buffers) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglDeleteBuffers((GLsizei)n, (const GLuint*)buffers);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}

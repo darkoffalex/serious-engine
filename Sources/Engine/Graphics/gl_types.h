@@ -1008,7 +1008,11 @@ typedef enum {
 	GL_VERTEX_SHADER        = 0x8B31,
 	GL_FRAGMENT_SHADER      = 0x8B30,
 	GL_GEOMETRY_SHADER      = 0x8DD9,
-	GL_INFO_LOG_LENGTH      = 0x8B84
+	GL_INFO_LOG_LENGTH      = 0x8B84,
+	GL_UNIFORM_BUFFER       = 0x8A11,
+	GL_STREAM_DRAW          = 0x88E0,
+	GL_STATIC_DRAW          = 0x88E4,
+	GL_DYNAMIC_DRAW         = 0x88E8
 
 } GLenum;
 
@@ -1073,8 +1077,11 @@ typedef double          GLdouble;   /* double precision float */
 typedef double          GLclampd;   /* double precision float in [0,1] */
 typedef char            GLchar;     /* 1-byte character for shader source and logs */
 
-
-
+#if defined(_WIN64)
+typedef signed   long long int GLsizeiptr;
+#else
+typedef signed   long  int     GLsizeiptr;
+#endif
 
 #endif  /* include-once check. */
 

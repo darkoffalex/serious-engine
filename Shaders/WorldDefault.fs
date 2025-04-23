@@ -5,14 +5,32 @@
 #define STXF_BLEND_ALPHA    0x10
 #define STXF_BLEND_ADD      0x20
 #define STXF_BLEND_SHADE    0x30
+#define MAX_LIGHT_SOURCES   16
 
-in VS_OUT {
+// Light source description
+struct Light
+{
+    vec3 position;   // world-space
+    vec3 direction;  // world-space
+    vec3 color;
+    vec3 colorAmbient;
+    float fallOff;
+    float hotSpot;
+    float cutOffMin;
+    float cutOffMax;
+    int type;
+};
+
+in GS_OUT {
     vec2 uv[4];
     vec4 color;
+    vec3 position;  // view-space position
+    vec3 normal;    // view-space normal
 } fs_in;
 
 layout(location = 0) out vec4 fragColor;
 
+// Texture units
 uniform sampler2D texLayer0;
 uniform sampler2D texLayer1;
 uniform sampler2D texLayer2;
@@ -20,11 +38,20 @@ uniform sampler2D texShadow;
 uniform sampler2D texSpec;
 uniform sampler2D texNormal;
 uniform sampler2D texHeight;
-uniform int blendTypes[3]; // For each texture form  tex[3]
-uniform int activeLayers;
-uniform bool useShadow;
 
-vec4 getTextureColor(int index, vec2 uv) {
+// Texture settings
+uniform int blendTypes[3];
+uniform int activeLayers;
+uniform int useShadow;
+
+// Light sources
+uniform int activeLights;
+layout (std140, binding = 0) uniform lighting
+{
+    Light lights[MAX_LIGHT_SOURCES];
+};
+
+vec4 getLayerColor(int index, vec2 uv) {
     switch (index) {
         case 0: return texture2D(texLayer0, uv);
         case 1: return texture2D(texLayer1, uv);
@@ -39,7 +66,7 @@ void main() {
     // Handle regular texture layers
     for (int i = 0; i < activeLayers; i++) 
     {
-        vec4 texColor = getTextureColor(i, fs_in.uv[i]);
+        vec4 texColor = getLayerColor(i, fs_in.uv[i]);
 
         // OPAQUE
         if (blendTypes[i] == STXF_BLEND_OPAQUE) {
@@ -59,6 +86,7 @@ void main() {
         }
     }
 
+    // TODO: Calculate lighting
     // TODO: Handle shadow
 
     fragColor = finalColor * fs_in.color;

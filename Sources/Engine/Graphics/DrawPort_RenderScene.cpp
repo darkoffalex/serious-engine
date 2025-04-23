@@ -19,6 +19,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Base/Statistics_internal.h>
 #include <Engine/Base/Console.h>
+#include <Engine/Base/ListIterator.inl>
+#include <Engine/Light/LightSource.h>
 #include <Engine/Math/Projection.h>
 #include <Engine/Graphics/RenderScene.h>
 #include <Engine/Graphics/Texture.h>
@@ -27,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/ShadowMap.h>
 #include <Engine/Graphics/Fog_internal.h>
 #include <Engine/Graphics/GfxShader.h>
+#include <Engine/Graphics/GfxUniformBuffer.h>
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Brushes/BrushTransformed.h>
 #include <Engine/World/World.h>
@@ -1592,8 +1595,61 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
   // check for shader, use if set
   if (pWorld && pWorld->wo_pShader)
   {
+      // Use shader program
       gfxUseProgram(pWorld->wo_pShader->Id());
       bUsedShader = TRUE;
+
+      // Get light-sources affecting polygon
+      INT iLightCount = 0;
+      auto* psbp = (CBrushPolygon*)(pspoGroup->spo_pvPolygon);
+      auto* pbsm = &(psbp->bpo_smShadowMap);
+      {
+          FORDELETELIST(CBrushShadowLayer, bsl_lnInShadowMap, pbsm->bsm_lhLayers, itbsl)
+          {
+              // Light-source pointer
+              CLightSource* plsLight = itbsl->bsl_plsLightSource;
+
+              // Skip lens flares
+              if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY) 
+                  continue;
+
+              // If reached max light count - break the cycle
+              if (iLightCount >= MAX_BRUSH_POLYGON_LIGHTS) 
+                  break;
+
+              // Get placement & orientation (world-space)
+              const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
+              const FLOAT3D& vLight = plLight.pl_PositionVector;
+              const FLOAT3D& vDirection = plLight.pl_OrientationAngle;
+
+              // Update light-source prepared data
+              auto& sLightData = pWorld->wo_awslShaderLights[iLightCount];
+              sLightData.wsl_vPosition = vLight;
+              sLightData.wsl_vDirection = vDirection;
+              sLightData.wsl_vColor = COLOR_TO_FLOAT3D(plsLight->ls_colColor);
+              sLightData.wsl_vColorAmbient = COLOR_TO_FLOAT3D(plsLight->ls_colAmbient);
+              sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
+              sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
+              sLightData.wsl_uType = WorldShaderLightType::WSLT_POINT; // TODO: Use entity's type instead custom one
+
+              // Count increases
+              iLightCount++;
+          }
+      }
+
+      // Have active lights
+      if (iLightCount > 0)
+      {
+          // Pass active light count to shader
+          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iActiveLights, iLightCount);
+
+          // Pass light data to shader
+          auto* ubo = pWorld->wo_pShaderUboLights;
+          gfxBindBuffer(GL_UNIFORM_BUFFER, ubo->Id());
+          gfxBufferData(GL_UNIFORM_BUFFER, sizeof(SWorldShaderLight), pWorld->wo_awslShaderLights.sa_Array, GL_STATIC_DRAW);
+          gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo->Id());
+          gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
+      }
   }
 
   // dual texturing

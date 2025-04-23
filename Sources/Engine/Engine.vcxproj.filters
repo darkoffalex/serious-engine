@@ -757,6 +757,9 @@
     <ClCompile Include="Graphics\GfxShader.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\GfxUniformBuffer.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1381,6 +1384,9 @@
       <Filter>Header Files\Graphics Headers</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\GfxShader.h">
+      <Filter>Header Files\Graphics Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GfxUniformBuffer.h">
       <Filter>Header Files\Graphics Headers</Filter>
     </ClInclude>
   </ItemGroup>

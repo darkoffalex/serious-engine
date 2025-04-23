@@ -41,3 +41,13 @@ DLLFUNCTION(OGL, void, glUniform3fv, (GLint location, GLsizei count, const GLflo
 DLLFUNCTION(OGL, void, glUniform4fv, (GLint location, GLsizei count, const GLfloat* value), 0, 1);
 
 DLLFUNCTION(OGL, void, glUniformMatrix3fv, (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value), 0, 1);
+
+DLLFUNCTION(OGL, void, glGenBuffers, (GLsizei n, GLuint* buffers), 0, 1);
+
+DLLFUNCTION(OGL, void, glBindBuffer, (GLenum target, GLuint buffer), 0, 1);
+
+DLLFUNCTION(OGL, void, glBufferData, (GLenum target, GLsizeiptr size, const void* data, GLenum usage), 0, 1);
+
+DLLFUNCTION(OGL, void, glBindBufferBase, (GLenum target, GLuint index, GLuint buffer), 0, 1);
+
+DLLFUNCTION(OGL, void, glDeleteBuffers, (GLsizei n, const GLuint* buffers), 0, 1);

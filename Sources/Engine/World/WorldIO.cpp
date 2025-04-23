@@ -31,6 +31,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Terrain/Terrain.h>
 #include <Engine/Graphics/GfxShader.h>
+#include <Engine/Graphics/GfxUniformBuffer.h>
 
 #define WORLDSTATEVERSION_NOCLASSCONTAINER 9
 #define WORLDSTATEVERSION_MULTITEXTURING 8
@@ -178,22 +179,30 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
     if (!wo_bShaderLoaded || force)
     {
         // If paths set (may be default)
-        if (wo_fnmShaderVsFileName.Length() != 0 && wo_fnmShaderFsFileName.Length() != 0)
+        if (wo_fnmShaderVsFileName.Length() != 0 
+            && wo_fnmShaderFsFileName.Length() != 0 
+            && wo_fnmShaderGsFileName.Length() != 0)
         {
             try
             {
                 // Load shader sources
                 auto vsSource = Utils::LoadFileAsText(wo_fnmShaderVsFileName.str_String);
+                auto gsSource = Utils::LoadFileAsText(wo_fnmShaderGsFileName.str_String);
                 auto fsSource = Utils::LoadFileAsText(wo_fnmShaderFsFileName.str_String);
 
                 // Map of sources
+                // TODO: Need some refactoring (usning not wrapped GL_ varaibles in wrapper methods - not good)
                 std::unordered_map<UINT, std::string> shaderSources = {
                     {GL_VERTEX_SHADER, vsSource},
+                    {GL_GEOMETRY_SHADER, gsSource},
                     {GL_FRAGMENT_SHADER, fsSource}
                 };
 
                 // Load shader
                 wo_pShader = new CGfxShader(shaderSources);
+
+                // Create light source UBO
+                wo_pShaderUboLights = new CGfxUniformBuffer(sizeof(SWorldShaderLight) * MAX_BRUSH_POLYGON_LIGHTS, 0, GL_STATIC_DRAW);
 
                 // Get uniform IDs
                 auto uniformIds = wo_pShader->UniformIds({
@@ -206,7 +215,8 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
                     "texHeight",     // 6
                     "activeLayers",  // 7
                     "blendTypes",    // 8
-                    "useShadow"      // 9
+                    "useShadow",     // 9
+                    "activeLights"   // 10
                 });
 
                 // Map uniform ids to structure
@@ -220,6 +230,7 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
                 wo_sShaderUniformIds.wsu_iActiveLayers   = uniformIds[7];
                 wo_sShaderUniformIds.wsu_iLayersBlending = uniformIds[8];
                 wo_sShaderUniformIds.wsu_iUseShadow      = uniformIds[9];
+                wo_sShaderUniformIds.wsu_iActiveLights   = uniformIds[10];
             }
             catch (std::exception& ex)
             {

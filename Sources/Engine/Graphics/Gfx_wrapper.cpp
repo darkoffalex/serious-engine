@@ -159,7 +159,11 @@ extern void (*gfxUniform2fv)(INT32 location, INT32 count, const FLOAT* value) = 
 extern void (*gfxUniform3fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
 extern void (*gfxUniform4fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
 extern void (*gfxUniformMatrix3fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value) = NULL;
-
+extern void (*gfxGenBuffers)(INT32 n, UINT* buffers) = NULL;
+extern void (*gfxBindBuffer)(UINT target, UINT buffer) = NULL;
+extern void (*gfxBufferData)(UINT target, SLONG size, const void* data, UINT usage) = NULL;
+extern void (*gfxBindBufferBase)(UINT target, UINT index, UINT buffer) = NULL;
+extern void (*gfxDeleteBuffers)(INT32 n, const UINT* buffers) = NULL;
 
 
 // dummy function (one size fits all:)
@@ -827,6 +831,11 @@ extern void GFX_SetFunctionPointers( INDEX iAPI)
     gfxUniform3fv           = &ogl_Uniform3fv;
     gfxUniform4fv           = &ogl_Uniform4fv;
     gfxUniformMatrix3fv     = &ogl_UniformMatrix3fv;
+    gfxGenBuffers           = &ogl_GenBuffers;
+    gfxBindBuffer           = &ogl_BindBuffer;
+    gfxBufferData           = &ogl_BufferData;
+    gfxBindBufferBase       = &ogl_BindBufferBase;
+    gfxDeleteBuffers        = &ogl_DeleteBuffers;
   }
   // Direct3D?
 #ifdef SE1_D3D

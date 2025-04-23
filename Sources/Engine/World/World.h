@@ -35,6 +35,7 @@ class CContentType;
 class CEnvironmentType;
 class CIlluminationType;
 class CGfxShader;
+class CGfxUniformBuffer;
 
 // mirroring types for mirror and stretch
 enum WorldMirrorType {
@@ -42,6 +43,13 @@ enum WorldMirrorType {
   WMT_X,
   WMT_Y,
   WMT_Z,
+};
+
+enum WorldShaderLightType : UINT {
+    WSLT_POINT = 0,
+    WSLT_AMBIENT,
+    WSLT_DIRECTIONAL,
+    WSLT_SPOT
 };
 
 // Shader uniform IDs
@@ -57,6 +65,28 @@ struct SWorldShaderUniforms
     INT32 wsu_iLayersBlending;
     INT32 wsu_iActiveLayers;
     INT32 wsu_iUseShadow;
+    INT32 wsu_iActiveLights;
+};
+
+// Light-source shader UBO entry
+struct SWorldShaderLight
+{
+    FLOAT3D wsl_vPosition;    // 12 bytes + 4 bytes padding = 16 bytes
+    FLOAT   _pad0;            // 4 bytes padding
+    FLOAT3D wsl_vDirection;   // 12 bytes + 4 bytes padding = 16 bytes
+    FLOAT   _pad1;            // 4 bytes padding
+    FLOAT3D wsl_vColor;       // 12 bytes + 4 bytes padding = 16 bytes
+    FLOAT   _pad2;            // 4 bytes padding
+    FLOAT3D wsl_vColorAmbient;// 12 bytes + 4 bytes padding = 16 bytes
+    FLOAT   _pad3;            // 4 bytes padding
+    FLOAT   wsl_fFallOff;     // 4 bytes
+    FLOAT   wsl_fHotSpot;     // 4 bytes
+    FLOAT   wsl_fCutOffMin;   // 4 bytes
+    FLOAT   wsl_fCutOffMax;   // 4 bytes
+    UINT    wsl_uType;        // 4 bytes
+
+    // Explicit paddig for array align (96 bytes)
+    FLOAT   _padEnd[3];       // 12 bytes (3 * 4)
 };
 
 class ENGINE_API CWorld {
@@ -72,8 +102,10 @@ public:
   CStaticArray<CContentType> wo_actContentTypes;
   // sector environment types
   CStaticArray<CEnvironmentType> wo_aetEnvironmentTypes;
-    // illumination types (0 is not used)
+  // illumination types (0 is not used)
   CStaticArray<CIlluminationType> wo_aitIlluminationTypes;
+  // light sources active for rendered polygon group (for rendering purposes only)
+  CStaticArray<SWorldShaderLight> wo_awslShaderLights;
 
   CEntityClass *wo_pecWorldBaseClass;   // world base class (used for some special features)
 
@@ -120,6 +152,7 @@ public:
   CTFileName wo_fnmShaderFsFileName; // Fragment shader source path
 
   CGfxShader* wo_pShader; // Shader wrapper pointer
+  CGfxUniformBuffer* wo_pShaderUboLights; // Shader light sources UBO buffer
   SWorldShaderUniforms wo_sShaderUniformIds; // Shader uniform IDs (retrieved at loading)
 
   /* Initialize collision grid. */

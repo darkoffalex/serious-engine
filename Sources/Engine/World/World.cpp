@@ -92,7 +92,9 @@ CWorld::CWorld(void)
   , wo_ulSpawnFlags(0)
   , wo_bShaderLoaded(FALSE)
   , wo_pShader(nullptr)
+  , wo_pShaderUboLights(nullptr)
   , wo_fnmShaderVsFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.vs"))
+  , wo_fnmShaderGsFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.gs"))
   , wo_fnmShaderFsFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.fs"))
 {
   wo_baBrushes.ba_pwoWorld = this;
@@ -105,6 +107,7 @@ CWorld::CWorld(void)
   wo_actContentTypes.New(256);
   wo_aetEnvironmentTypes.New(256);
   wo_aitIlluminationTypes.New(256);
+  wo_awslShaderLights.New(MAX_BRUSH_POLYGON_LIGHTS);
 
   // initialize collision grid
   InitCollisionGrid();
@@ -143,7 +146,9 @@ CWorld::~CWorld()
 
   delete &wo_baBrushes;
   delete &wo_taTerrains;
+
   delete wo_pShader;
+  delete wo_pShaderUboLights;
 }
 
 /*

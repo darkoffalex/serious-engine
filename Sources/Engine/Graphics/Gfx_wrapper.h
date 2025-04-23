@@ -265,6 +265,11 @@ extern void (*gfxUniform2fv)(INT32 location, INT32 count, const FLOAT* value);
 extern void (*gfxUniform3fv)(INT32 location, INT32 count, const FLOAT* value);
 extern void (*gfxUniform4fv)(INT32 location, INT32 count, const FLOAT* value);
 extern void (*gfxUniformMatrix3fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value);
+extern void (*gfxGenBuffers)(INT32 n, UINT* buffers);
+extern void (*gfxBindBuffer)(UINT target, UINT buffer);
+extern void (*gfxBufferData)(UINT target, SLONG size, const void* data, UINT usage);
+extern void (*gfxBindBufferBase)(UINT target, UINT index, UINT buffer);
+extern void (*gfxDeleteBuffers)(INT32 n, const UINT* buffers);
 
 // MISC
 
