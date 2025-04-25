@@ -1079,8 +1079,10 @@ typedef char            GLchar;     /* 1-byte character for shader source and lo
 
 #if defined(_WIN64)
 typedef signed   long long int GLsizeiptr;
+typedef signed   long long int GLintptr;
 #else
 typedef signed   long  int     GLsizeiptr;
+typedef signed   long  int     GLintptr;
 #endif
 
 #endif  /* include-once check. */

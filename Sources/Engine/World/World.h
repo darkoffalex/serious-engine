@@ -66,6 +66,7 @@ struct SWorldShaderUniforms
     INT32 wsu_iActiveLayers;
     INT32 wsu_iUseShadow;
     INT32 wsu_iActiveLights;
+    INT32 wsu_iUseLights;
 };
 
 // Light-source shader UBO entry
@@ -104,8 +105,6 @@ public:
   CStaticArray<CEnvironmentType> wo_aetEnvironmentTypes;
   // illumination types (0 is not used)
   CStaticArray<CIlluminationType> wo_aitIlluminationTypes;
-  // light sources active for rendered polygon group (for rendering purposes only)
-  CStaticArray<SWorldShaderLight> wo_awslShaderLights;
 
   CEntityClass *wo_pecWorldBaseClass;   // world base class (used for some special features)
 

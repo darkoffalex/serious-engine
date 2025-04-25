@@ -21,8 +21,6 @@ public:
 	UINT Usage() const;
 	SLONG Size() const;
 
-	void UpdateBufferData(SLONG lOffset, SLONG lSize, void* data);
-
 protected:
 	UINT ubo_uId;
 	UINT ubo_uBinding;

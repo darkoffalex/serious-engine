@@ -1401,6 +1401,14 @@ static void ogl_BufferData(UINT target, SLONG size, const void* data, UINT usage
     _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
+static void ogl_BufferSubData(UINT target, SLONG offset, SLONG size, const void* data) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglBufferSubData((GLenum)target, (GLintptr)offset, (GLsizeiptr)size, data);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
 // Bind a buffer to an indexed target
 static void ogl_BindBufferBase(UINT target, UINT index, UINT buffer) {
     ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);

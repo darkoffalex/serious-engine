@@ -10,10 +10,10 @@
 // Light source description
 struct Light
 {
-    vec3 position;   // world-space
-    vec3 direction;  // world-space
-    vec3 color;
-    vec3 colorAmbient;
+    vec4 position;   // world-space (v3 + padding)
+    vec4 direction;  // world-space (v3 + padding)
+    vec4 color;
+    vec4 colorAmbient;
     float fallOff;
     float hotSpot;
     float cutOffMin;
@@ -45,13 +45,22 @@ uniform int activeLayers;
 uniform int useShadow;
 
 // Light sources
+uniform int useLights;
 uniform int activeLights;
 layout (std140, binding = 0) uniform lighting
 {
     Light lights[MAX_LIGHT_SOURCES];
 };
 
-vec4 getLayerColor(int index, vec2 uv) {
+vec3 calculateLighting(vec3 fragPos, vec3 fragNormal, Light light)
+{
+    vec3 toLight = light.position.xyz - fragPos;
+    float intensity = (length(toLight) <= light.fallOff) ? 1.0f : 0.0f;
+    return vec3(intensity);
+}
+
+vec4 getLayerColor(int index, vec2 uv) 
+{
     switch (index) {
         case 0: return texture2D(texLayer0, uv);
         case 1: return texture2D(texLayer1, uv);
@@ -60,8 +69,9 @@ vec4 getLayerColor(int index, vec2 uv) {
     }
 }
 
-void main() {
-    vec4 finalColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+void main() 
+{
+    vec4 finalColor = vec4(0.0f);
 
     // Handle regular texture layers
     for (int i = 0; i < activeLayers; i++) 
@@ -86,8 +96,19 @@ void main() {
         }
     }
 
-    // TODO: Calculate lighting
-    // TODO: Handle shadow
+    // Lighting/shading enabled for polygon
+    if(bool(useLights))
+    {
+        vec3 lighting = vec3(0.0);
+        for (int i = 0; i < activeLights; i++) {
+            lighting += calculateLighting(fs_in.position, fs_in.normal, lights[i]);
+        }
+
+        finalColor.rgb *= lighting;
+    }
+
+
+    // TODO: Handle shadow texture
 
     fragColor = finalColor * fs_in.color;
 }

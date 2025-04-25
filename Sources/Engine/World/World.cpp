@@ -107,7 +107,6 @@ CWorld::CWorld(void)
   wo_actContentTypes.New(256);
   wo_aetEnvironmentTypes.New(256);
   wo_aitIlluminationTypes.New(256);
-  wo_awslShaderLights.New(MAX_BRUSH_POLYGON_LIGHTS);
 
   // initialize collision grid
   InitCollisionGrid();

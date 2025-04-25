@@ -162,6 +162,7 @@ extern void (*gfxUniformMatrix3fv)(INT32 location, INT32 count, BOOL transpose, 
 extern void (*gfxGenBuffers)(INT32 n, UINT* buffers) = NULL;
 extern void (*gfxBindBuffer)(UINT target, UINT buffer) = NULL;
 extern void (*gfxBufferData)(UINT target, SLONG size, const void* data, UINT usage) = NULL;
+extern void (*gfxBufferSubData)(UINT target, SLONG offset, SLONG size, const void* data) = NULL;
 extern void (*gfxBindBufferBase)(UINT target, UINT index, UINT buffer) = NULL;
 extern void (*gfxDeleteBuffers)(INT32 n, const UINT* buffers) = NULL;
 
@@ -834,6 +835,7 @@ extern void GFX_SetFunctionPointers( INDEX iAPI)
     gfxGenBuffers           = &ogl_GenBuffers;
     gfxBindBuffer           = &ogl_BindBuffer;
     gfxBufferData           = &ogl_BufferData;
+    gfxBufferSubData        = &ogl_BufferSubData;
     gfxBindBufferBase       = &ogl_BindBufferBase;
     gfxDeleteBuffers        = &ogl_DeleteBuffers;
   }

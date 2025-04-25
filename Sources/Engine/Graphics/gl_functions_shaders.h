@@ -51,3 +51,5 @@ DLLFUNCTION(OGL, void, glBufferData, (GLenum target, GLsizeiptr size, const void
 DLLFUNCTION(OGL, void, glBindBufferBase, (GLenum target, GLuint index, GLuint buffer), 0, 1);
 
 DLLFUNCTION(OGL, void, glDeleteBuffers, (GLsizei n, const GLuint* buffers), 0, 1);
+
+DLLFUNCTION(OGL, void, glBufferSubData, (GLenum target, GLintptr offset, GLsizeiptr size, const void* data), 0, 1);

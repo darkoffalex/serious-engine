@@ -33,6 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Brushes/BrushTransformed.h>
 #include <Engine/World/World.h>
+#include <Engine/Rendering/Render.h>
 
 #include <Engine/Templates/StaticStackArray.cpp>
 
@@ -64,6 +65,7 @@ extern BOOL _bMultiPlayer;
 extern BOOL CVA_bWorld;
 static GfxAPIType eAPI;
 
+ENGINE_API extern CWorldRenderPrefs _wrpWorldRenderPrefs;
 
 // vertex coordinates and elements used by one pass of polygons
 static CStaticStackArray<GFXVertex>   _avtxPass;   
@@ -85,19 +87,20 @@ CStaticStackArray<GFXVertex3> _avtxScene;
 #define GF_HAZE (1L<<8)
 #define GF_SEL  (1L<<9)
 #define GF_KEY  (1L<<10) // first layer requires alpha-keying
+#define GF_FB   (1L<<11)
 
 // texture combinations for max 4 texture units (fog, haze and selection not included)
-#define GF_TX0_TX1         (1L<<11)
-#define GF_TX0_TX2         (1L<<12)
-#define GF_TX0_SHD         (1L<<13)
-#define GF_TX2_SHD         (1L<<14)  // second pass
-#define GF_TX0_TX1_TX2     (1L<<15)
-#define GF_TX0_TX1_SHD     (1L<<16)
-#define GF_TX0_TX2_SHD     (1L<<17)
-#define GF_TX0_TX1_TX2_SHD (1L<<18)
+#define GF_TX0_TX1         (1L<<12)
+#define GF_TX0_TX2         (1L<<13)
+#define GF_TX0_SHD         (1L<<14)
+#define GF_TX2_SHD         (1L<<15)  // second pass
+#define GF_TX0_TX1_TX2     (1L<<16)
+#define GF_TX0_TX1_SHD     (1L<<17)
+#define GF_TX0_TX2_SHD     (1L<<18)
+#define GF_TX0_TX1_TX2_SHD (1L<<19)
 
 // total number of groups
-#define GROUPS_MAXCOUNT (1L<<11)   // max group +1 !
+#define GROUPS_MAXCOUNT (1L<<12)   // max group +1 !
 #define GROUPS_MINCOUNT (1L<<4)-1  // min group !
 static ScenePolygon *_apspoGroups[GROUPS_MAXCOUNT];
 static INDEX _ctGroupsCount=0;
@@ -362,6 +365,8 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
     }
 
     // if it has shadowmap active
+    // TODO: Something wrong with this part (wrong division to groups by shadow map, need re-check, temporary commented).
+    /*
     if( pspo->spo_psmShadowMap!=NULL && wld_bRenderShadowMaps) {
       _pfGfxProfile.IncrementCounter( CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
       // prepare shadow map
@@ -407,7 +412,15 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
         ulBits |= GF_SHD;
       }
     }
+    */
 
+    // if it has fullbright flag (temporary use SHD flag to distinct)
+    auto* psbp = (CBrushPolygon*)(pspo->spo_pvPolygon);
+    if (psbp->bpo_ulFlags & BPOF_FULLBRIGHT) {
+        _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
+        _ctGroupsCount |= GF_FB;
+        ulBits |= GF_FB;
+    }
     // if it has fog active
     if( pspo->spo_ulFlags&SPOF_RENDERFOG) {
       _pfGfxProfile.IncrementCounter( CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
@@ -1599,12 +1612,26 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
       gfxUseProgram(pWorld->wo_pShader->Id());
       bUsedShader = TRUE;
 
+      // Bind light-sources UBO
+      gfxBindBuffer(GL_UNIFORM_BUFFER, pWorld->wo_pShaderUboLights->Id());
+
+      // MatriX & offset to transform coordinates
+      const FLOATmatrix3D& mViewer = _ppr->pr_ViewerRotationMatrix;
+      const FLOAT3D& vCameraPos = _ppr->pr_vViewerPosition;
+
       // Get light-sources affecting polygon
       INT iLightCount = 0;
       auto* psbp = (CBrushPolygon*)(pspoGroup->spo_pvPolygon);
       auto* pbsm = &(psbp->bpo_smShadowMap);
+
+      // Should calculate lighting
+      BOOL bShadows = _wrpWorldRenderPrefs.wrp_shtShadows != CWorldRenderPrefs::ShadowsType::SHT_NONE;
+      BOOL bFullBright = psbp->bpo_ulFlags & BPOF_FULLBRIGHT;
+      BOOL bCalcLighting = bShadows && !bFullBright;
+
+      if(pbsm->GetShadowLayersCount() > 0)
       {
-          FORDELETELIST(CBrushShadowLayer, bsl_lnInShadowMap, pbsm->bsm_lhLayers, itbsl)
+          FOREACHINLIST(CBrushShadowLayer, bsl_lnInShadowMap, pbsm->bsm_lhLayers, itbsl)
           {
               // Light-source pointer
               CLightSource* plsLight = itbsl->bsl_plsLightSource;
@@ -1620,36 +1647,36 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
               // Get placement & orientation (world-space)
               const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
               const FLOAT3D& vLight = plLight.pl_PositionVector;
-              const FLOAT3D& vDirection = plLight.pl_OrientationAngle;
+              const FLOAT3D& vDirection = plLight.pl_OrientationAngle; 
 
-              // Update light-source prepared data
-              auto& sLightData = pWorld->wo_awslShaderLights[iLightCount];
-              sLightData.wsl_vPosition = vLight;
-              sLightData.wsl_vDirection = vDirection;
+              // Convert to view-space
+              const FLOAT3D vLightView = (vLight - vCameraPos) * mViewer;
+
+              // Prepare data
+              SWorldShaderLight sLightData = {};
+              sLightData.wsl_vPosition = vLightView;
+              sLightData.wsl_vDirection = vDirection; // TODO: Use view rotation inverse
               sLightData.wsl_vColor = COLOR_TO_FLOAT3D(plsLight->ls_colColor);
               sLightData.wsl_vColorAmbient = COLOR_TO_FLOAT3D(plsLight->ls_colAmbient);
               sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
               sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
-              sLightData.wsl_uType = WorldShaderLightType::WSLT_POINT; // TODO: Use entity's type instead custom one
+              sLightData.wsl_uType = WorldShaderLightType::WSLT_POINT;
+
+              // Update UBO
+              gfxBufferSubData(GL_UNIFORM_BUFFER, sizeof(SWorldShaderLight) * iLightCount, sizeof(SWorldShaderLight), &sLightData);
 
               // Count increases
               iLightCount++;
           }
       }
 
-      // Have active lights
-      if (iLightCount > 0)
-      {
-          // Pass active light count to shader
-          gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iActiveLights, iLightCount);
+      // Pass lighting usage information
+      gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
+      gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iActiveLights, iLightCount);
 
-          // Pass light data to shader
-          auto* ubo = pWorld->wo_pShaderUboLights;
-          gfxBindBuffer(GL_UNIFORM_BUFFER, ubo->Id());
-          gfxBufferData(GL_UNIFORM_BUFFER, sizeof(SWorldShaderLight), pWorld->wo_awslShaderLights.sa_Array, GL_STATIC_DRAW);
-          gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo->Id());
-          gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
-      }
+      // Rebind active UBO to binding 0
+      gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, pWorld->wo_pShaderUboLights->Id());
+      gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
   }
 
   // dual texturing

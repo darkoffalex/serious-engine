@@ -11,9 +11,9 @@ CGfxUniformBuffer::CGfxUniformBuffer()
 
 CGfxUniformBuffer::CGfxUniformBuffer(SLONG lSize, UINT uBinding, UINT eUsage)
 	: ubo_uId(0)
-	, ubo_uBinding(0)
-	, ubo_lSize(0)
-	, ubo_eUsage(0)
+	, ubo_uBinding(uBinding)
+	, ubo_lSize(lSize)
+	, ubo_eUsage(eUsage)
 {
 	gfxGenBuffers(1, &ubo_uId);
 	gfxBindBuffer(GL_UNIFORM_BUFFER, ubo_uId);
