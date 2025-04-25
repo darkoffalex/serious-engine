@@ -7,6 +7,12 @@
 #define STXF_BLEND_SHADE    0x30
 #define MAX_LIGHT_SOURCES   16
 
+// Light tpes
+#define LT_POINT            0
+#define LT_AMBIENT          1
+#define LT_DIRECTIONAL      2
+#define LT_SPOT             3
+
 // Light source description
 struct Light
 {
@@ -52,11 +58,35 @@ layout (std140, binding = 0) uniform lighting
     Light lights[MAX_LIGHT_SOURCES];
 };
 
-vec3 calculateLighting(vec3 fragPos, vec3 fragNormal, Light light)
+vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDiffuson)
 {
+    // Fragment-light vector
     vec3 toLight = light.position.xyz - fragPos;
-    float intensity = (length(toLight) <= light.fallOff) ? 1.0f : 0.0f;
-    return vec3(intensity);
+    // Fragment-light sitance
+    float distance = length(toLight);
+
+    // Out of fall-off radious
+    if (distance > light.fallOff) {
+        return vec3(0.0);
+    }
+
+    // Fragment-light normalized vector (direction)
+    vec3 lightDir = normalize(toLight);
+
+    // Calc diffusion if needed (depends on light fall angle)
+    float diffuse = (calcDiffuson ? max(dot(fragNormal, lightDir), 0.0) : 1.0f);
+    
+    // Attenuation (max for hot-spot, attenuate until fall-off)
+    float attenuation;
+    if (distance <= light.hotSpot) {
+        attenuation = 1.0;
+    } else {
+        attenuation = (light.fallOff - distance) / (light.fallOff - light.hotSpot);
+        attenuation = clamp(attenuation, 0.0, 1.0);
+    }
+
+    // Result color
+    return light.color.rgb * diffuse * attenuation;
 }
 
 vec4 getLayerColor(int index, vec2 uv) 
@@ -100,13 +130,22 @@ void main()
     if(bool(useLights))
     {
         vec3 lighting = vec3(0.0);
-        for (int i = 0; i < activeLights; i++) {
-            lighting += calculateLighting(fs_in.position, fs_in.normal, lights[i]);
+        for (int i = 0; i < activeLights; i++) 
+        {
+            switch(lights[i].type)
+            {
+                case LT_POINT:
+                    lighting += calculatePointLight(fs_in.position, fs_in.normal, lights[i], true);
+                break;
+
+                case LT_AMBIENT:
+                    lighting += calculatePointLight(fs_in.position, fs_in.normal, lights[i], false);
+                break;
+            }
         }
 
         finalColor.rgb *= lighting;
     }
-
 
     // TODO: Handle shadow texture
 

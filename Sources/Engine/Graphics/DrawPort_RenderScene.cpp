@@ -1652,15 +1652,29 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
               // Convert to view-space
               const FLOAT3D vLightView = (vLight - vCameraPos) * mViewer;
 
+              // Colors
+              UBYTE ubColor[3] = {0, 0, 0};
+              UBYTE ubAmbient[3] = { 0, 0, 0 };
+              ColorToRGB(plsLight->ls_colColor, ubColor[0], ubColor[1], ubColor[2]);
+              ColorToRGB(plsLight->ls_colAmbient, ubAmbient[0], ubAmbient[1], ubAmbient[2]);
+
+              // Light types
+              WorldShaderLightType eType = WorldShaderLightType::WSLT_POINT;
+              if (plsLight->ls_ulFlags & LSF_CASTSHADOWS){
+                  eType = WorldShaderLightType::WSLT_POINT;
+              }else{
+                  eType = WorldShaderLightType::WSLT_AMBIENT;
+              }
+
               // Prepare data
               SWorldShaderLight sLightData = {};
               sLightData.wsl_vPosition = vLightView;
               sLightData.wsl_vDirection = vDirection; // TODO: Use view rotation inverse
-              sLightData.wsl_vColor = COLOR_TO_FLOAT3D(plsLight->ls_colColor);
-              sLightData.wsl_vColorAmbient = COLOR_TO_FLOAT3D(plsLight->ls_colAmbient);
+              sLightData.wsl_vColor = FLOAT3D((FLOAT)ubColor[0] / 255.0f, (FLOAT)ubColor[1] / 255.0f, (FLOAT)ubColor[2] / 255.0f);
+              sLightData.wsl_vColorAmbient = FLOAT3D((FLOAT)ubAmbient[0] / 255.0f, (FLOAT)ubAmbient[1] / 255.0f, (FLOAT)ubAmbient[2] / 255.0f);
               sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
               sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
-              sLightData.wsl_uType = WorldShaderLightType::WSLT_POINT;
+              sLightData.wsl_uType = (UINT)eType;
 
               // Update UBO
               gfxBufferSubData(GL_UNIFORM_BUFFER, sizeof(SWorldShaderLight) * iLightCount, sizeof(SWorldShaderLight), &sLightData);
