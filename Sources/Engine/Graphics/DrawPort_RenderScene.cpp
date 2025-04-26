@@ -365,8 +365,6 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
     }
 
     // if it has shadowmap active
-    // TODO: Something wrong with this part (wrong division to groups by shadow map, need re-check, temporary commented).
-    /*
     if( pspo->spo_psmShadowMap!=NULL && wld_bRenderShadowMaps) {
       _pfGfxProfile.IncrementCounter( CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
       // prepare shadow map
@@ -412,7 +410,6 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
         ulBits |= GF_SHD;
       }
     }
-    */
 
     // if it has fullbright flag (temporary use SHD flag to distinct)
     auto* psbp = (CBrushPolygon*)(pspo->spo_pvPolygon);
@@ -1621,66 +1618,75 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
       // Get light-sources affecting polygon
       INT iLightCount = 0;
-      auto* psbp = (CBrushPolygon*)(pspoGroup->spo_pvPolygon);
-      auto* pbsm = &(psbp->bpo_smShadowMap);
 
       // Should calculate lighting
       BOOL bShadows = _wrpWorldRenderPrefs.wrp_shtShadows != CWorldRenderPrefs::ShadowsType::SHT_NONE;
-      BOOL bFullBright = psbp->bpo_ulFlags & BPOF_FULLBRIGHT;
+      BOOL bFullBright = ulGroupFlags & GF_FB;
       BOOL bCalcLighting = bShadows && !bFullBright;
 
-      if(pbsm->GetShadowLayersCount() > 0)
+      // For all polygons in group
+      for (ScenePolygon* pspo = pspoGroup; pspo != NULL; pspo = pspo->spo_pspoSucc)
       {
-          FOREACHINLIST(CBrushShadowLayer, bsl_lnInShadowMap, pbsm->bsm_lhLayers, itbsl)
+          auto* psbp = (CBrushPolygon*)(pspo->spo_pvPolygon);
+          auto* pbsm = &(psbp->bpo_smShadowMap);
+
+          if (pbsm->GetShadowLayersCount() > 0)
           {
-              // Light-source pointer
-              CLightSource* plsLight = itbsl->bsl_plsLightSource;
+              FOREACHINLIST(CBrushShadowLayer, bsl_lnInShadowMap, pbsm->bsm_lhLayers, itbsl)
+              {
+                  // Light-source pointer
+                  CLightSource* plsLight = itbsl->bsl_plsLightSource;
 
-              // Skip lens flares
-              if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY) 
-                  continue;
+                  // Skip lens flares
+                  if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
+                      continue;
 
-              // If reached max light count - break the cycle
-              if (iLightCount >= MAX_BRUSH_POLYGON_LIGHTS) 
-                  break;
+                  // If reached max light count - break the cycle
+                  if (iLightCount >= MAX_BRUSH_POLYGON_LIGHTS)
+                      break;
 
-              // Get placement & orientation (world-space)
-              const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
-              const FLOAT3D& vLight = plLight.pl_PositionVector;
-              const FLOAT3D& vDirection = plLight.pl_OrientationAngle; 
+                  // Get placement & orientation (world-space)
+                  const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
+                  const FLOAT3D& vLight = plLight.pl_PositionVector;
+                  const FLOAT3D& vDirection = plLight.pl_OrientationAngle;
 
-              // Convert to view-space
-              const FLOAT3D vLightView = (vLight - vCameraPos) * mViewer;
+                  // Convert to view-space
+                  const FLOAT3D vLightView = (vLight - vCameraPos) * mViewer;
 
-              // Colors
-              UBYTE ubColor[3] = {0, 0, 0};
-              UBYTE ubAmbient[3] = { 0, 0, 0 };
-              ColorToRGB(plsLight->ls_colColor, ubColor[0], ubColor[1], ubColor[2]);
-              ColorToRGB(plsLight->ls_colAmbient, ubAmbient[0], ubAmbient[1], ubAmbient[2]);
+                  // Colors
+                  UBYTE ubColor[3] = { 0, 0, 0 };
+                  UBYTE ubAmbient[3] = { 0, 0, 0 };
+                  ColorToRGB(plsLight->ls_colColor, ubColor[0], ubColor[1], ubColor[2]);
+                  ColorToRGB(plsLight->ls_colAmbient, ubAmbient[0], ubAmbient[1], ubAmbient[2]);
 
-              // Light types
-              WorldShaderLightType eType = WorldShaderLightType::WSLT_POINT;
-              if (plsLight->ls_ulFlags & LSF_CASTSHADOWS){
-                  eType = WorldShaderLightType::WSLT_POINT;
-              }else{
-                  eType = WorldShaderLightType::WSLT_AMBIENT;
+                  // Light types
+                  WorldShaderLightType eType = WorldShaderLightType::WSLT_POINT;
+                  if (plsLight->ls_ulFlags & LSF_DIRECTIONAL) {
+                      eType = WorldShaderLightType::WSLT_DIRECTIONAL;
+                  }
+                  else if (plsLight->ls_ulFlags & LSF_CASTSHADOWS) {
+                      eType = WorldShaderLightType::WSLT_POINT;
+                  }
+                  else {
+                      eType = WorldShaderLightType::WSLT_AMBIENT;
+                  }
+
+                  // Prepare data
+                  SWorldShaderLight sLightData = {};
+                  sLightData.wsl_vPosition = vLightView;
+                  sLightData.wsl_vDirection = vDirection; // TODO: Use view rotation inverse
+                  sLightData.wsl_vColor = FLOAT3D((FLOAT)ubColor[0] / 255.0f, (FLOAT)ubColor[1] / 255.0f, (FLOAT)ubColor[2] / 255.0f);
+                  sLightData.wsl_vColorAmbient = FLOAT3D((FLOAT)ubAmbient[0] / 255.0f, (FLOAT)ubAmbient[1] / 255.0f, (FLOAT)ubAmbient[2] / 255.0f);
+                  sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
+                  sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
+                  sLightData.wsl_uType = (UINT)eType;
+
+                  // Update UBO
+                  gfxBufferSubData(GL_UNIFORM_BUFFER, sizeof(SWorldShaderLight) * iLightCount, sizeof(SWorldShaderLight), &sLightData);
+
+                  // Count increases
+                  iLightCount++;
               }
-
-              // Prepare data
-              SWorldShaderLight sLightData = {};
-              sLightData.wsl_vPosition = vLightView;
-              sLightData.wsl_vDirection = vDirection; // TODO: Use view rotation inverse
-              sLightData.wsl_vColor = FLOAT3D((FLOAT)ubColor[0] / 255.0f, (FLOAT)ubColor[1] / 255.0f, (FLOAT)ubColor[2] / 255.0f);
-              sLightData.wsl_vColorAmbient = FLOAT3D((FLOAT)ubAmbient[0] / 255.0f, (FLOAT)ubAmbient[1] / 255.0f, (FLOAT)ubAmbient[2] / 255.0f);
-              sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
-              sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
-              sLightData.wsl_uType = (UINT)eType;
-
-              // Update UBO
-              gfxBufferSubData(GL_UNIFORM_BUFFER, sizeof(SWorldShaderLight) * iLightCount, sizeof(SWorldShaderLight), &sLightData);
-
-              // Count increases
-              iLightCount++;
           }
       }
 
