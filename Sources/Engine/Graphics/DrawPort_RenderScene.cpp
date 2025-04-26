@@ -294,7 +294,7 @@ static void RSRemoveDummyPolygons( ScenePolygon *pspoAll, ScenePolygon **ppspoNo
 
 
 // bin polygons into groups
-static void RSBinToGroups( ScenePolygon *pspoFirst)
+static void RSBinToGroups(ScenePolygon *pspoFirst, CWorld* pWorld)
 {
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_RS_BINTOGROUPS);
   // clamp texture layers
@@ -387,13 +387,19 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
               ULONG ulB = ClampUp( ((ULONG)ubB)<<1, 255UL);
               colFlat = RGBToColor(ulR,ulG,ulB);
             }
-          } // mix color in the first texture layer
-          COLOR &colTotal = pspo->spo_acolColors[0];
-          COLOR  colLayer = pspo->spo_acolColors[3];
-          if( colTotal==0xFFFFFFFF) colTotal = colLayer;
-          else if( colLayer!=0xFFFFFFFF) colTotal = MulColors( colTotal, colLayer);
-          if(  colTotal==0xFFFFFFFF) colTotal = colFlat;
-          else colTotal = MulColors( colTotal,  colFlat);
+          } 
+          // Mix color in the first texture layer (only for non-shader cases)
+          // Don't need to update poly layer in case of shader enabled (directional & ambient calcualted in shader)
+          if (!pWorld->wo_bShaderLoaded)
+          {
+              COLOR& colTotal = pspo->spo_acolColors[0];
+              COLOR  colLayer = pspo->spo_acolColors[3];
+              if (colTotal == 0xFFFFFFFF) colTotal = colLayer;
+              else if (colLayer != 0xFFFFFFFF) colTotal = MulColors(colTotal, colLayer);
+              if (colTotal == 0xFFFFFFFF) colTotal = colFlat;
+              else colTotal = MulColors(colTotal, colFlat);
+          }
+
           psmShadow->MarkDrawn();
         }
         else {
@@ -1659,11 +1665,14 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
                   // Get placement & orientation (world-space)
                   const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
+                  const FLOATmatrix3D& mLightRotation = plsLight->ls_penEntity->GetRotationMatrix();
+
                   const FLOAT3D& vLight = plLight.pl_PositionVector;
-                  const FLOAT3D& vDirection = plLight.pl_OrientationAngle;
+                  const FLOAT3D& vDirection = FLOAT3D(0.0f, 0.0f, -1.0f) * mLightRotation;
 
                   // Convert to view-space
                   const FLOAT3D vLightView = (vLight - vCameraPos) * mViewer;
+                  const FLOAT3D vDirectionView = vDirection * mViewer;
 
                   // Colors
                   UBYTE ubColor[3] = { 0, 0, 0 };
@@ -1686,7 +1695,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                   // Prepare data
                   SWorldShaderLight sLightData = {};
                   sLightData.wsl_vPosition = vLightView;
-                  sLightData.wsl_vDirection = vDirection; // TODO: Use view rotation inverse
+                  sLightData.wsl_vDirection = vDirectionView;
                   sLightData.wsl_vColor = FLOAT3D((FLOAT)ubColor[0] / 255.0f, (FLOAT)ubColor[1] / 255.0f, (FLOAT)ubColor[2] / 255.0f);
                   sLightData.wsl_vColorAmbient = FLOAT3D((FLOAT)ubAmbient[0] / 255.0f, (FLOAT)ubAmbient[1] / 255.0f, (FLOAT)ubAmbient[2] / 255.0f);
                   sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
@@ -2087,7 +2096,7 @@ void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prP
   RSCheckLayersUpToDate(pspoNonDummy);
 
   // bin polygons to groups by texture passes
-  RSBinToGroups(pspoNonDummy);
+  RSBinToGroups(pspoNonDummy, pWorld);
 
   // for each group                           
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_RS_RENDERGROUP);

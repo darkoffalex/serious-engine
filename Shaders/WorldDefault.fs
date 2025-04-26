@@ -75,6 +75,8 @@ vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDi
 
     // Calc diffusion if needed (depends on light fall angle)
     float diffuse = (calcDiffuson ? max(dot(fragNormal, lightDir), 0.0) : 1.0f);
+
+    // TODO: Calc specular
     
     // Attenuation (max for hot-spot, attenuate until fall-off)
     float attenuation;
@@ -87,6 +89,19 @@ vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDi
 
     // Result color
     return light.color.rgb * diffuse * attenuation;
+}
+
+vec3 calculateDirectional(vec3 fragNormal, Light light)
+{
+    // Directional to light
+    vec3 lightDir = normalize(-light.direction.xyz);
+    // Calc diffusion
+    float diffuse = max(dot(fragNormal, lightDir), 0.0);
+
+    // TODO: Calc specular
+
+    // Result color
+    return (light.color.rgb * diffuse) + light.colorAmbient.rgb;
 }
 
 vec4 getLayerColor(int index, vec2 uv) 
@@ -140,6 +155,10 @@ void main()
 
                 case LT_AMBIENT:
                     lighting += calculatePointLight(fs_in.position, fs_in.normal, lights[i], false);
+                break;
+
+                case LT_DIRECTIONAL:
+                    lighting += calculateDirectional(fs_in.normal, lights[i]);
                 break;
             }
         }
