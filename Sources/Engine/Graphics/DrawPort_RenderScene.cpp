@@ -1624,6 +1624,10 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
       BOOL bFullBright = ulGroupFlags & GF_FB;
       BOOL bCalcLighting = bShadows && !bFullBright;
 
+      // To avoid adding same light-sources multiple times (when same light affects multiple polygons)
+      std::vector<CLightSource*> cAddedLights;
+      cAddedLights.reserve(MAX_BRUSH_POLYGON_LIGHTS);
+
       // For all polygons in group
       for (ScenePolygon* pspo = pspoGroup; pspo != NULL; pspo = pspo->spo_pspoSucc)
       {
@@ -1636,6 +1640,14 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
               {
                   // Light-source pointer
                   CLightSource* plsLight = itbsl->bsl_plsLightSource;
+
+                  // Skip if already added
+                  if (std::find(cAddedLights.begin(), cAddedLights.end(), plsLight) != cAddedLights.end()) {
+                      break;
+                  }
+
+                  // Mark as added
+                  cAddedLights.push_back(plsLight);
 
                   // Skip lens flares
                   if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
