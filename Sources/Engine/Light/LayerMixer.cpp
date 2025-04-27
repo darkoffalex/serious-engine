@@ -743,15 +743,19 @@ rowLoop:
     // loop thru pixels in current row
     mov     ecx,D [_iPixCt]
 pixLoop:
-    // check if pixel need to be drawn; i.e. draw if( [esi] & ubMask && (slL2Point<FTOX))
-    //cmp     ebx, FTOX
-    //jge     skipPixel
+    // Check if outside radius (slL2Point >= FTOX), set max color if it is
+    cmp     ebx, FTOX
+    jge     setMaxColor
+
+    // Check shadow mask ([esi] & ubMask) for pixels inside radius
     test    dl,B [esi]
-    je      skipPixel
-    // calculate intensities and do actual drawing of shadow pixel ARGB
+    jne     setMaxColor     // Max color for non-shadowed
+    jmp     skipPixel       // Skip (leave black) shadowed
+
+setMaxColor:
+    // Set max color
     movd    mm4, ecx
     mov     ecx, D[_slLightMax]
-    // mix underlaying pixels with the calculated one
     movd    mm6,ecx 
     punpcklwd mm6,mm6
     punpckldq mm6,mm6
@@ -763,6 +767,7 @@ pixLoop:
     packuswb mm5,mm0
     movd    D [edi],mm5
     movd    ecx,mm4
+
 skipPixel:
     // advance to next pixel
     add     edi,4
@@ -1427,13 +1432,31 @@ void CLayerMixer::AddOneLayerDirectional( CBrushShadowLayer *pbsl, UBYTE *pubMas
     fIntensity = -((lm_pbpoPolygon->bpo_pbplPlane->bpl_plAbsolute)%lm_vLightDirection);
     fIntensity = ClampDn( fIntensity, 0.0f);
   }
-  // calculate light color and ambient
-  lm_colLight = lm_plsLight->GetLightColor();
-  pbsl->bsl_colLastAnim = lm_colLight;
-  ULONG ulIntensity = NormFloatToByte(fIntensity);
-  ulIntensity = (ulIntensity<<CT_RSHIFT)|(ulIntensity<<CT_GSHIFT)|(ulIntensity<<CT_BSHIFT);
-  lm_colLight = MulColors(   lm_colLight, ulIntensity);
-  lm_colLight = AdjustColor( lm_colLight, _slShdHueShift, _slShdSaturation);
+
+  // get world
+  CBrushPolygon* pbpo = pbsl->bsl_pbsmShadowMap->GetBrushPolygon();
+  CBrushSector* pbsc = pbpo->bpo_pbscSector;
+  CBrushMip* pbm = pbsc->bsc_pbmBrushMip;
+  CBrush3D* pbr = pbm->bm_pbrBrush;
+  CWorld* pwo = pbr->br_penEntity->GetWorld();
+
+  // for shader pipeline we need only shadows, no light color required
+  if (pwo->wo_bShaderLoaded)
+  {
+      FLOAT fIntensity = 1.0f / (FLOAT)pbsl->bsl_pbsmShadowMap->GetShadowLayersCount();
+      lm_colLight = RGBAFloatToColor(fIntensity, fIntensity, fIntensity, fIntensity);
+  }
+  // for classic pipeline (non-shader) - light color should presist in shadow map
+  else
+  {
+      // calculate light color and ambient
+      lm_colLight = lm_plsLight->GetLightColor();
+      pbsl->bsl_colLastAnim = lm_colLight;
+      ULONG ulIntensity = NormFloatToByte(fIntensity);
+      ulIntensity = (ulIntensity << CT_RSHIFT) | (ulIntensity << CT_GSHIFT) | (ulIntensity << CT_BSHIFT);
+      lm_colLight = MulColors(lm_colLight, ulIntensity);
+      lm_colLight = AdjustColor(lm_colLight, _slShdHueShift, _slShdSaturation);
+  }
 
   // masked or non-masked?
   if( pubMask==NULL) {

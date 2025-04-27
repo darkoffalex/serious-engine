@@ -481,7 +481,14 @@ void CBrushShadowMap::FindLightRectangle(CLightSource &ls, class CLightRectangle
   FLOAT3D vLight;
   PIX pixMinU, pixMinV, pixMaxU, pixMaxV;
 
-  // if the light is directional
+  // Check for shaders usage
+  CBrushSector* pbsc = bpoPolygon.bpo_pbscSector;
+  CBrushMip* pbm = pbsc->bsc_pbmBrushMip;
+  CBrush3D* pbr = pbm->bm_pbrBrush;
+  CWorld* pwo = pbr->br_penEntity->GetWorld();
+  BOOL bShadersEnabled = pwo->wo_bShaderLoaded;
+
+  // if the light is directional OR shader is used
   if( ls.ls_ulFlags&LSF_DIRECTIONAL)
   {
     pixMinU = 0;
@@ -520,9 +527,13 @@ void CBrushShadowMap::FindLightRectangle(CLightSource &ls, class CLightRectangle
       lr.lr_fpixHotU = FLOAT(vmexHotPoint(1)+sm_mexOffsetX)/(1L<<iMipLevel);
       lr.lr_fpixHotV = FLOAT(vmexHotPoint(2)+sm_mexOffsetY)/(1L<<iMipLevel);
     }
+
+    // Workaroaund for shader mode shadows (to increase light rectangle boundaries & avoid black pixels)
+    // TODO: Fix this later (maybe by imroving AddShadowMaskOnly function in LayerMixer)
+    FLOAT fFallOff = bShadersEnabled ? 10000.0f : ls.ls_rFallOff;
     // calculate maximum radius of light on the polygon
-    MEX mexFallOff = MEX( sqrt(ls.ls_rFallOff*ls.ls_rFallOff -
-                               lr.lr_fLightPlaneDistance*lr.lr_fLightPlaneDistance)*1024.0f);
+    MEX mexFallOff = MEX( sqrt(fFallOff * fFallOff - lr.lr_fLightPlaneDistance*lr.lr_fLightPlaneDistance)*1024.0f);
+
     // find rectangle coordinates from that
     pixMinU = ((vmexHotPoint(1)+sm_mexOffsetX-mexFallOff)>>iMipLevel);
     pixMinV = ((vmexHotPoint(2)+sm_mexOffsetY-mexFallOff)>>iMipLevel);
