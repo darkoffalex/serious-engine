@@ -1651,7 +1651,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
                   // Skip if already added
                   if (std::find(cAddedLights.begin(), cAddedLights.end(), plsLight) != cAddedLights.end()) {
-                      break;
+                      continue;
                   }
 
                   // Mark as added

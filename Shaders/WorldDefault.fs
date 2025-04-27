@@ -40,7 +40,7 @@ layout(location = 0) out vec4 fragColor;
 uniform sampler2D texLayer0;
 uniform sampler2D texLayer1;
 uniform sampler2D texLayer2;
-uniform sampler2D texShadow;
+uniform sampler2D texShadow; // Precalcualted & combined by SE for all light-sources!
 uniform sampler2D texSpec;
 uniform sampler2D texNormal;
 uniform sampler2D texHeight;
@@ -116,36 +116,36 @@ vec4 getLayerColor(int index, vec2 uv)
 
 void main() 
 {
-    vec4 finalColor = vec4(0.0f);
-
-    // Handle regular texture layers
+    // Get albedo color from texture layers
+    vec4 albedo = vec4(0.0f);
     for (int i = 0; i < activeLayers; i++) 
     {
         vec4 texColor = getLayerColor(i, fs_in.uv[i]);
 
         // OPAQUE
         if (blendTypes[i] == STXF_BLEND_OPAQUE) {
-            finalColor = texColor;
+            albedo = texColor;
         } 
         // SHADE
         else if (blendTypes[i] == STXF_BLEND_SHADE) { 
-            finalColor = 2.0 * texColor * finalColor;
+            albedo = 2.0 * texColor * albedo;
         }
         // ALPHA
         else if (blendTypes[i] == STXF_BLEND_ALPHA) {
-            finalColor = mix(finalColor, texColor, texColor.a);
+            albedo = mix(albedo, texColor, texColor.a);
         }
         // ADD
         else if (blendTypes[i] == STXF_BLEND_ADD) { 
-            finalColor += texColor;
+            albedo += albedo;
         }
     }
 
-    // Lighting/shading enabled for polygon
+    // Calculate lighting if needed
+    vec3 lighting = vec3(1.0f);
     if(bool(useLights))
     {
-        vec3 lighting = vec3(0.0);
-        for (int i = 0; i < activeLights; i++) 
+        lighting = vec3(0.0);
+        for (int i = 0; i < activeLights; i++)
         {
             switch(lights[i].type)
             {
@@ -162,11 +162,14 @@ void main()
                 break;
             }
         }
-
-        finalColor.rgb *= lighting;
+        
+        if(bool(useShadow))
+        {
+            lighting *= texture2D(texShadow, fs_in.uv[activeLayers]).r;
+        }
     }
 
-    // TODO: Handle shadow texture
-
-    fragColor = finalColor * fs_in.color;
+    // Final result
+    vec4 finalColor = vec4(albedo.rgb * lighting, albedo.a);
+    fragColor = finalColor;
 }
