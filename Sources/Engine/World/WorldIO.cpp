@@ -176,8 +176,12 @@ void CWorld::LoadBrushes_t(const CTFileName &fnmWorld) // throw char *
 
 void CWorld::LoadWorldShaderOnce(BOOL force)
 {
-    if (!wo_bShaderLoaded || force)
+    if (!wo_bShaderLoadAttempted || force)
     {
+        //wo_bShaderLoadAttempted = true;
+        //return;
+        
+
         // If paths set (may be default)
         if (wo_fnmShaderVsFileName.Length() != 0 
             && wo_fnmShaderFsFileName.Length() != 0 
@@ -238,9 +242,13 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
             {
                 FatalError("%s", ex.what());
             }
+
+            // Loaded successfully
+            wo_bShaderLoaded = TRUE;
         }
 
-        wo_bShaderLoaded = TRUE;
+        // Attempted to load (success not guaranteed)
+        wo_bShaderLoadAttempted = TRUE;
     }
 }
 

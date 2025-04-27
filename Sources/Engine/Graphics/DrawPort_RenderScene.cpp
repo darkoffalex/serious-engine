@@ -1479,6 +1479,8 @@ void RSUpdateShaderUniforms(const SWorldShaderUniforms& rsUniforms, ScenePolygon
     {
         iaTextures[0] = 0;
         iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iShadowTexture = 1;
+        iShadowUsed = (INT32)TRUE;
         iActiveLayersCount = 1;
     }
     // layers 0, 1

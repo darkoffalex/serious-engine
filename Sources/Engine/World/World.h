@@ -145,6 +145,7 @@ public:
   CListHead wo_lhMovers;        // entities that want to/have to move
   BOOL wo_bPortalLinksUpToDate; // set if portal-sector links are up to date
   BOOL wo_bShaderLoaded; // Shader program instance created & loaded
+  BOOL wo_bShaderLoadAttempted; // Shader loading tried once
 
   CTFileName wo_fnmShaderVsFileName; // Vertex shader source path
   CTFileName wo_fnmShaderGsFileName; // Geometry shader source path

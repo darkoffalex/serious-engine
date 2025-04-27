@@ -39,6 +39,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Templates/Selection.cpp>
 #include <Engine/Terrain/Terrain.h>
+#include <Engine/Graphics/GfxShader.h>
+#include <Engine/Graphics/GfxUniformBuffer.h>
 
 #include <Engine/Templates/Stock_CEntityClass.h>
 
@@ -91,6 +93,7 @@ CWorld::CWorld(void)
   , wo_taTerrains(*new CTerrainArchive)
   , wo_ulSpawnFlags(0)
   , wo_bShaderLoaded(FALSE)
+  , wo_bShaderLoadAttempted(FALSE)
   , wo_pShader(nullptr)
   , wo_pShaderUboLights(nullptr)
   , wo_fnmShaderVsFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.vs"))
