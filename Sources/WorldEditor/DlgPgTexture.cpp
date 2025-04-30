@@ -121,6 +121,9 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
     GetDlgItem( IDC_RADIO_TEXTURE)->EnableWindow( TRUE);
     GetDlgItem( IDC_TEXTURE_2)->EnableWindow( TRUE);
     GetDlgItem( IDC_TEXTURE_3)->EnableWindow( TRUE);
+    GetDlgItem( IDC_RADIO_TEXTURE_SPEC)->EnableWindow(TRUE);
+    GetDlgItem( IDC_RADIO_TEXTURE_NORM)->EnableWindow(TRUE);
+    GetDlgItem( IDC_RADIO_TEXTURE_HEIGHT)->EnableWindow(TRUE);
 
     if( !bSelectionExists)
     {
@@ -318,6 +321,9 @@ BEGIN_MESSAGE_MAP(CDlgPgTexture, CPropertyPage)
 	ON_BN_CLICKED(IDC_RADIO_TEXTURE, OnRadioTexture)
 	ON_BN_CLICKED(IDC_TEXTURE_2, OnTexture2)
 	ON_BN_CLICKED(IDC_TEXTURE_3, OnTexture3)
+    ON_BN_CLICKED(IDC_RADIO_TEXTURE_SPEC, OnBnClickedRadioTextureSpec)
+    ON_BN_CLICKED(IDC_RADIO_TEXTURE_NORM, OnBnClickedRadioTextureNorm)
+    ON_BN_CLICKED(IDC_RADIO_TEXTURE_HEIGHT, OnBnClickedRadioTextureHeight)
 	ON_BN_CLICKED(IDC_REMOVE_TEXTURE, OnRemoveTexture)
 	ON_CBN_SELCHANGE(IDC_SCROLL_COMBO, OnSelchangeScrollCombo)
 	ON_WM_DROPFILES()
@@ -425,6 +431,30 @@ void CDlgPgTexture::OnTexture3()
   if( pDoc == NULL)  return;
   pDoc->m_iTexture = 2;
 	UpdateData( FALSE);
+}
+
+void CDlgPgTexture::OnBnClickedRadioTextureSpec()
+{
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    if (pDoc == NULL)  return;
+    pDoc->m_iTexture = 3;
+    UpdateData(FALSE);
+}
+
+void CDlgPgTexture::OnBnClickedRadioTextureNorm()
+{
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    if (pDoc == NULL)  return;
+    pDoc->m_iTexture = 4;
+    UpdateData(FALSE);
+}
+
+void CDlgPgTexture::OnBnClickedRadioTextureHeight()
+{
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    if (pDoc == NULL)  return;
+    pDoc->m_iTexture = 5;
+    UpdateData(FALSE);
 }
 
 void CDlgPgTexture::OnSelchangeScrollCombo()

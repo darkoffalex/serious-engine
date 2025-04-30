@@ -232,6 +232,9 @@ void CBrushPolygon::Clear(void)
   bpo_abptTextures[0].Clear();
   bpo_abptTextures[1].Clear();
   bpo_abptTextures[2].Clear();
+  bpo_abptTextures[3].Clear();
+  bpo_abptTextures[4].Clear();
+  bpo_abptTextures[5].Clear();
   DiscardShadingInfos();
 };
 // discard all cached shading info for models
@@ -257,6 +260,9 @@ void CBrushPolygon::CopyFromSameSector(CBrushPolygon &bpoOriginal)
   bpo_abptTextures[0].CopyTextureProperties( bpoOriginal.bpo_abptTextures[0], bCopyMapping);
   bpo_abptTextures[1].CopyTextureProperties( bpoOriginal.bpo_abptTextures[1], bCopyMapping);
   bpo_abptTextures[2].CopyTextureProperties( bpoOriginal.bpo_abptTextures[2], bCopyMapping);
+  bpo_abptTextures[3].CopyTextureProperties( bpoOriginal.bpo_abptTextures[3], bCopyMapping);
+  bpo_abptTextures[4].CopyTextureProperties( bpoOriginal.bpo_abptTextures[4], bCopyMapping);
+  bpo_abptTextures[5].CopyTextureProperties( bpoOriginal.bpo_abptTextures[5], bCopyMapping);
   bpo_mdShadow     = bpoOriginal.bpo_mdShadow;
   bpo_pbscSector   = bpoOriginal.bpo_pbscSector;
 
@@ -273,6 +279,9 @@ CBrushPolygon &CBrushPolygon::CopyProperties(CBrushPolygon &bpoOther, BOOL bCopy
   bpo_abptTextures[0].CopyTextureProperties( bpoOther.bpo_abptTextures[0], bCopyMapping);
   bpo_abptTextures[1].CopyTextureProperties( bpoOther.bpo_abptTextures[1], bCopyMapping);
   bpo_abptTextures[2].CopyTextureProperties( bpoOther.bpo_abptTextures[2], bCopyMapping);
+  bpo_abptTextures[3].CopyTextureProperties( bpoOther.bpo_abptTextures[3], bCopyMapping);
+  bpo_abptTextures[4].CopyTextureProperties( bpoOther.bpo_abptTextures[4], bCopyMapping);
+  bpo_abptTextures[5].CopyTextureProperties( bpoOther.bpo_abptTextures[5], bCopyMapping);
   return *this;
 };
 
@@ -290,6 +299,9 @@ CBrushPolygon &CBrushPolygon::CopyTextures(CBrushPolygon &bpoOther) {
   bpo_abptTextures[0].CopyTextureProperties( bpoOther.bpo_abptTextures[0], TRUE);
   bpo_abptTextures[1].CopyTextureProperties( bpoOther.bpo_abptTextures[1], TRUE);
   bpo_abptTextures[2].CopyTextureProperties( bpoOther.bpo_abptTextures[2], TRUE);
+  bpo_abptTextures[3].CopyTextureProperties( bpoOther.bpo_abptTextures[3], TRUE);
+  bpo_abptTextures[4].CopyTextureProperties( bpoOther.bpo_abptTextures[4], TRUE);
+  bpo_abptTextures[5].CopyTextureProperties( bpoOther.bpo_abptTextures[5], TRUE);
   return *this;
 };
 

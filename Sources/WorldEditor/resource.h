@@ -1,21 +1,6 @@
-/* Copyright (c) 2002-2012 Croteam Ltd. 
-This program is free software; you can redistribute it and/or modify
-it under the terms of version 2 of the GNU General Public License as published by
-the Free Software Foundation
-
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
-
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by WorldEditor.rc
+// Включаемый файл, созданный в Microsoft Visual C++.
+// Используется WorldEditor.rc
 //
 #define ID_LOAD_PREFERENCES             3
 #define ID_SELECT_ALL                   3
@@ -594,10 +579,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define IDC_REMOVE_TEXTURE              1145
 #define IDC_STATIC_OFFSET               1146
 #define IDC_PREVIEW_FRAME               1147
+#define IDC_RADIO_TEXTURE_SPEC          1148
 #define IDC_DISPLACE_FILE               1149
 #define IDC_TEXTURE_DIM_T               1149
 #define IDC_DISPLACE_T                  1150
+#define IDC_RADIO_TEXTURE_NORM          1150
 #define IDC_ANGLE3D_T                   1151
+#define IDC_RADIO_TEXTURE_HEIGHT        1151
 #define ID_CENTER                       1153
 #define ID_DELETE_BROWSE_BY_CLASS       1153
 #define IDC_STATIC_SHADOW_COLOR         1154
@@ -1327,7 +1315,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        255
+#define _APS_NEXT_RESOURCE_VALUE        256
 #define _APS_NEXT_COMMAND_VALUE         33391
 #define _APS_NEXT_CONTROL_VALUE         1264
 #define _APS_NEXT_SYMED_VALUE           111

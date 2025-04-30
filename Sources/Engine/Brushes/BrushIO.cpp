@@ -319,6 +319,13 @@ void CBrushSector::Write_t( CTStream *postrm) // throw char *
     bpo.bpo_abptTextures[0].Write_t(*postrm);
     bpo.bpo_abptTextures[1].Write_t(*postrm);
     bpo.bpo_abptTextures[2].Write_t(*postrm);
+
+    // read shader pipeline textures information (add block ID first)
+    (*postrm).WriteID_t("SNHs");
+    bpo.bpo_abptTextures[3].Write_t(*postrm);
+    bpo.bpo_abptTextures[4].Write_t(*postrm);
+    bpo.bpo_abptTextures[5].Write_t(*postrm);
+
     // write other polygon properties
     (*postrm).Write_t(&bpo.bpo_bppProperties, sizeof(bpo.bpo_bppProperties));
 
@@ -489,6 +496,21 @@ void CBrushSector::Read_t( CTStream *pistrm) // throw char *
       bpo.bpo_abptTextures[0].Read_t(*pistrm);
       bpo.bpo_abptTextures[1].Read_t(*pistrm);
       bpo.bpo_abptTextures[2].Read_t(*pistrm);
+
+      // try to read shader pipeline texture information
+      try
+      {
+          (*pistrm).ExpectID_t("SNHs");
+          bpo.bpo_abptTextures[3].Read_t(*pistrm);
+          bpo.bpo_abptTextures[4].Read_t(*pistrm);
+          bpo.bpo_abptTextures[5].Read_t(*pistrm);
+      }
+      // backward compatibility - skip block if not found, read as old format
+      catch (...) 
+      {
+          CPrintF("Failed to load shader pipeline texture information\n");
+          (*pistrm).SetPos_t((*pistrm).GetPos_t() - CID_LENGTH);
+      }
 
       // read other polygon properties
       (*pistrm).Read_t(&bpo.bpo_bppProperties, sizeof(bpo.bpo_bppProperties));
