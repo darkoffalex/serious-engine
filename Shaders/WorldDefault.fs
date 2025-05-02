@@ -37,6 +37,7 @@ in GS_OUT {
     vec4 color;
     vec3 position;  // view-space position
     vec3 normal;    // view-space normal
+    mat3 TBN;       // TBN matrix for normal mapping
 } fs_in;
 
 layout(location = 0) out vec4 fragColor;
@@ -172,10 +173,17 @@ void main()
         lighting = vec3(0.0);
         float shininess = 64.0f;
         float specIntensity = 0.0f;
+        vec3 normal = fs_in.normal;
 
         if(bool(materialUsage[MTL_SPECULAR]))
         {
             specIntensity = texture2D(texSpec, fs_in.uv[4]).r;
+        }
+
+        if(bool(materialUsage[MTL_NORMAL]))
+        {
+            vec3 normalTangent = texture(texNormal, fs_in.uv[5]).rgb * 2.0 - 1.0;
+            normal = normalize(fs_in.TBN * normalTangent);
         }
 
         for (int i = 0; i < activeLights; i++)
@@ -185,7 +193,7 @@ void main()
                 case LT_POINT:
                     lighting += calculatePointLight(
                         fs_in.position, 
-                        fs_in.normal, 
+                        normal, 
                         lights[i], 
                         true, 
                         specIntensity, 
@@ -195,7 +203,7 @@ void main()
                 case LT_AMBIENT:
                     lighting += calculatePointLight(
                         fs_in.position, 
-                        fs_in.normal, 
+                        normal, 
                         lights[i], 
                         false, 
                         specIntensity, 
@@ -205,7 +213,7 @@ void main()
                 case LT_DIRECTIONAL:
                     lighting += calculateDirectional(
                         fs_in.position,
-                        fs_in.normal, 
+                        normal, 
                         lights[i], 
                         specIntensity, 
                         shininess);
