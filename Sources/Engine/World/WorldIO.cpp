@@ -220,8 +220,9 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
                     "activeLayers",  // 7
                     "blendTypes",    // 8
                     "useShadow",     // 9
-                    "activeLights",  // 10
-                    "useLights"      // 11
+                    "materialUsage", // 10
+                    "activeLights",  // 11
+                    "useLights"      // 12
                 });
 
                 // Map uniform ids to structure
@@ -235,8 +236,9 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
                 wo_sShaderUniformIds.wsu_iActiveLayers   = uniformIds[7];
                 wo_sShaderUniformIds.wsu_iLayersBlending = uniformIds[8];
                 wo_sShaderUniformIds.wsu_iUseShadow      = uniformIds[9];
-                wo_sShaderUniformIds.wsu_iActiveLights   = uniformIds[10];
-                wo_sShaderUniformIds.wsu_iUseLights      = uniformIds[11];
+                wo_sShaderUniformIds.wsi_iMaterialUsage  = uniformIds[10];
+                wo_sShaderUniformIds.wsu_iActiveLights   = uniformIds[11];
+                wo_sShaderUniformIds.wsu_iUseLights      = uniformIds[12];
             }
             catch (std::exception& ex)
             {

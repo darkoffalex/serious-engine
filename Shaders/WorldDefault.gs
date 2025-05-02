@@ -4,13 +4,13 @@ layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
 
 in VS_OUT {
-    vec2 uv[4];
+    vec2 uv[7];
     vec4 color;
     vec3 position; // view-space position
 } gs_in[];
 
 out GS_OUT {
-    vec2 uv[4];
+    vec2 uv[7];
     vec4 color;
     vec3 position; // view-space position (pre-interpoaltion)
     vec3 normal;   // view-space normal (pre-interpolation)
@@ -33,6 +33,11 @@ void main()
         gs_out.uv[1] = gs_in[i].uv[1];
         gs_out.uv[2] = gs_in[i].uv[2];
         gs_out.uv[3] = gs_in[i].uv[3];
+
+        gs_out.uv[4] = gs_in[i].uv[4];
+        gs_out.uv[5] = gs_in[i].uv[5];
+        gs_out.uv[6] = gs_in[i].uv[6];
+
         gs_out.color = gs_in[i].color;
         gs_out.position = gs_in[i].position;
         gs_out.normal = normal; // Same normal for all vertices (flat shading)

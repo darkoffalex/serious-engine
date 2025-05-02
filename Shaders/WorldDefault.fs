@@ -13,6 +13,11 @@
 #define LT_DIRECTIONAL      2
 #define LT_SPOT             3
 
+// Material texture types
+#define MTL_SPECULAR        0
+#define MTL_NORMAL          1
+#define MTL_HEIGHT          2
+
 // Light source description
 struct Light
 {
@@ -28,7 +33,7 @@ struct Light
 };
 
 in GS_OUT {
-    vec2 uv[4];
+    vec2 uv[7];
     vec4 color;
     vec3 position;  // view-space position
     vec3 normal;    // view-space normal
@@ -47,6 +52,7 @@ uniform sampler2D texHeight;
 
 // Texture settings
 uniform int blendTypes[3];
+uniform int materialUsage[3];
 uniform int activeLayers;
 uniform int useShadow;
 
@@ -139,6 +145,7 @@ void main()
             albedo += albedo;
         }
     }
+    albedo *= fs_in.color;
 
     // Calculate lighting if needed
     vec3 lighting = vec3(1.0f);

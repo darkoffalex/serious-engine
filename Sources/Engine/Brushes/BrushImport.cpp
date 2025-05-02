@@ -234,6 +234,22 @@ void CBrushSector::FromObjectSector_t(CObjectSector &osc) // throw char *
       bpo.bpo_abptTextures[2].s.bpt_ubScroll = 0;
       bpo.bpo_abptTextures[2].s.bpt_ubBlend = BPT_BLEND_SHADE;
 
+      // shader pipeline textures
+      bpo.bpo_abptTextures[3].s.bpt_colColor = C_BLACK | CT_OPAQUE;
+      bpo.bpo_abptTextures[3].s.bpt_ubFlags = BPTF_DISCARDABLE;
+      bpo.bpo_abptTextures[3].s.bpt_ubScroll = 0;
+      bpo.bpo_abptTextures[3].s.bpt_ubBlend = BPT_BLEND_OPAQUE;
+
+      bpo.bpo_abptTextures[4].s.bpt_colColor = C_BLACK | CT_OPAQUE;
+      bpo.bpo_abptTextures[4].s.bpt_ubFlags = BPTF_DISCARDABLE;
+      bpo.bpo_abptTextures[4].s.bpt_ubScroll = 0;
+      bpo.bpo_abptTextures[4].s.bpt_ubBlend = BPT_BLEND_OPAQUE;
+
+      bpo.bpo_abptTextures[5].s.bpt_colColor = C_BLACK | CT_OPAQUE;
+      bpo.bpo_abptTextures[5].s.bpt_ubFlags = BPTF_DISCARDABLE;
+      bpo.bpo_abptTextures[5].s.bpt_ubScroll = 0;
+      bpo.bpo_abptTextures[5].s.bpt_ubBlend = BPT_BLEND_OPAQUE;
+
       bpo.bpo_ulFlags|=BPOF_WASBRUSHPOLYGON;
     }
 

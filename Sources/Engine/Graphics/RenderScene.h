@@ -57,12 +57,16 @@ struct ScenePolygon {
   INDEX *spo_piElements;      // array of triangle elements
   INDEX  spo_ctElements;      // element count
 
-  // texture and shadow parameters: 0, 1, 2 are texture maps, 3 is shadow
-  CMappingVectors spo_amvMapping[4];  // texture colors and alpha
-  COLOR spo_acolColors[4];            // texture flags
-  UBYTE spo_aubTextureFlags[4];       // current mip factors for each texture
+  
+  CMappingVectors spo_amvMapping[4];    // texture and shadow parameters: 0, 1, 2 are texture maps, 3 is shadow 
+  CMappingVectors spo_amvMappingMtl[3]; // mappings for material textures (specular, normal, height - shader pipeline)
+  COLOR spo_acolColors[4];              // texture colors and alpha
+  COLOR spo_acolColorsMtl[3];           // texture colors for material layers (specular, normal, height - shader pipeline)
+  UBYTE spo_aubTextureFlags[4];         // texture flags
+  UBYTE spo_aubTextureFlagsMtl[3];      // texture flags or material layers (specular, normal, height - shader pipeline)
   // textures and shadowmap
   class CTextureObject *spo_aptoTextures[3];
+  class CTextureObject* spo_aptoTexturesMtl[3];
   class CShadowMap     *spo_psmShadowMap; 
 
   // internal for rendering

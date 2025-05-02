@@ -65,6 +65,7 @@ struct SWorldShaderUniforms
     INT32 wsu_iLayersBlending;
     INT32 wsu_iActiveLayers;
     INT32 wsu_iUseShadow;
+    INT32 wsi_iMaterialUsage;
     INT32 wsu_iActiveLights;
     INT32 wsu_iUseLights;
 };
