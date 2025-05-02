@@ -64,14 +64,14 @@ layout (std140, binding = 0) uniform lighting
     Light lights[MAX_LIGHT_SOURCES];
 };
 
-vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDiffuson)
+vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDiffusion, float specInstensity, float shininess)
 {
     // Fragment-light vector
     vec3 toLight = light.position.xyz - fragPos;
-    // Fragment-light sitance
+    // Fragment-light distance
     float distance = length(toLight);
 
-    // Out of fall-off radious
+    // Out of fall-off radius
     if (distance > light.fallOff) {
         return vec3(0.0);
     }
@@ -80,10 +80,19 @@ vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDi
     vec3 lightDir = normalize(toLight);
 
     // Calc diffusion if needed (depends on light fall angle)
-    float diffuse = (calcDiffuson ? max(dot(fragNormal, lightDir), 0.0) : 1.0f);
+    float diffuse = (calcDiffusion ? max(dot(fragNormal, lightDir), 0.0) : 1.0f);
 
-    // TODO: Calc specular
-    
+    // Calc specular (Blinn-Phong)
+    float specular = 0.0;
+    if (specInstensity > 0.0 && diffuse > 0.0) { // Only compute specular if diffuse is non-zero
+        // View direction (in view space, camera at (0,0,0))
+        vec3 viewDir = normalize(-fragPos);
+        // Halfway vector
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        // Specular term
+        specular = pow(max(dot(fragNormal, halfwayDir), 0.0), shininess) * specInstensity;
+    }
+
     // Attenuation (max for hot-spot, attenuate until fall-off)
     float attenuation;
     if (distance <= light.hotSpot) {
@@ -93,21 +102,30 @@ vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDi
         attenuation = clamp(attenuation, 0.0, 1.0);
     }
 
-    // Result color
-    return light.color.rgb * diffuse * attenuation;
+    // Result color (combine diffuse and specular)
+    return light.color.rgb * (diffuse + specular) * attenuation;
 }
 
-vec3 calculateDirectional(vec3 fragNormal, Light light)
+vec3 calculateDirectional(vec3 fragPos, vec3 fragNormal, Light light, float specInstensity, float shininess)
 {
     // Directional to light
     vec3 lightDir = normalize(-light.direction.xyz);
     // Calc diffusion
     float diffuse = max(dot(fragNormal, lightDir), 0.0);
 
-    // TODO: Calc specular
+    // Calc specular (Blinn-Phong)
+    float specular = 0.0;
+    if (specInstensity > 0.0 && diffuse > 0.0) { // Only compute specular if diffuse is non-zero
+        // View direction (in view space, camera at (0,0,0))
+        vec3 viewDir = normalize(-fragPos);
+        // Halfway vector
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        // Specular term
+        specular = pow(max(dot(fragNormal, halfwayDir), 0.0), shininess) * specInstensity;
+    }
 
     // Result color
-    return (light.color.rgb * diffuse) + light.colorAmbient.rgb;
+    return light.color.rgb * (diffuse + specular) + light.colorAmbient.rgb;
 }
 
 vec4 getLayerColor(int index, vec2 uv) 
@@ -152,20 +170,45 @@ void main()
     if(bool(useLights))
     {
         lighting = vec3(0.0);
+        float shininess = 64.0f;
+        float specIntensity = 0.0f;
+
+        if(bool(materialUsage[MTL_SPECULAR]))
+        {
+            specIntensity = texture2D(texSpec, fs_in.uv[4]).r;
+        }
+
         for (int i = 0; i < activeLights; i++)
         {
             switch(lights[i].type)
             {
                 case LT_POINT:
-                    lighting += calculatePointLight(fs_in.position, fs_in.normal, lights[i], true);
+                    lighting += calculatePointLight(
+                        fs_in.position, 
+                        fs_in.normal, 
+                        lights[i], 
+                        true, 
+                        specIntensity, 
+                        shininess);
                 break;
 
                 case LT_AMBIENT:
-                    lighting += calculatePointLight(fs_in.position, fs_in.normal, lights[i], false);
+                    lighting += calculatePointLight(
+                        fs_in.position, 
+                        fs_in.normal, 
+                        lights[i], 
+                        false, 
+                        specIntensity, 
+                        shininess);
                 break;
 
                 case LT_DIRECTIONAL:
-                    lighting += calculateDirectional(fs_in.normal, lights[i]);
+                    lighting += calculateDirectional(
+                        fs_in.position,
+                        fs_in.normal, 
+                        lights[i], 
+                        specIntensity, 
+                        shininess);
                 break;
             }
         }

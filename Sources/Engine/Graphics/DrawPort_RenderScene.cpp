@@ -848,10 +848,8 @@ static void RSSetTextureCoords( ScenePolygon *pspoGroup, INDEX iLayer, INDEX iUn
         const FLOAT fDX = pvtx[i].x - vO(1);
         const FLOAT fDY = pvtx[i].y - vO(2);
         const FLOAT fDZ = pvtx[i].z - vO(3);
-        const FLOAT s = ((vU(1) * fDX) + (vU(2) * fDY) + (vU(3) * fDZ));
-        const FLOAT t = ((vV(1) * fDX) + (vV(2) * fDY) + (vV(3) * fDZ));
-        ptex[i].s = s;
-        ptex[i].t = t;
+        ptex[i].s = ((vU(1) * fDX) + (vU(2) * fDY) + (vU(3) * fDZ));
+        ptex[i].t = ((vV(1) * fDX) + (vV(2) * fDY) + (vV(3) * fDZ));
     }
   }
 
