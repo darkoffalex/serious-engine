@@ -1745,10 +1745,14 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                   if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
                       continue;
 
+                  // Skip dark lights
+                  if (plsLight->ls_ulFlags & LSF_DARKLIGHT)
+                      continue;
+
                   // If reached max light count - break the cycle
                   if (iLightCount >= MAX_BRUSH_POLYGON_LIGHTS)
                       break;
-
+                      
                   // Get placement & orientation (world-space)
                   const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
                   const FLOATmatrix3D& mLightRotation = plsLight->ls_penEntity->GetRotationMatrix();
@@ -1763,8 +1767,8 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                   // Colors
                   UBYTE ubColor[3] = { 0, 0, 0 };
                   UBYTE ubAmbient[3] = { 0, 0, 0 };
-                  ColorToRGB(plsLight->ls_colColor, ubColor[0], ubColor[1], ubColor[2]);
-                  ColorToRGB(plsLight->ls_colAmbient, ubAmbient[0], ubAmbient[1], ubAmbient[2]);
+                  ColorToRGB(plsLight->GetLightColor(), ubColor[0], ubColor[1], ubColor[2]);
+                  ColorToRGB(plsLight->GetLightAmbient(), ubAmbient[0], ubAmbient[1], ubAmbient[2]);
 
                   // Light types
                   WorldShaderLightType eType = WorldShaderLightType::WSLT_POINT;

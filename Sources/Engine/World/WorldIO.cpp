@@ -178,10 +178,6 @@ void CWorld::LoadWorldShaderOnce(BOOL force)
 {
     if (!wo_bShaderLoadAttempted || force)
     {
-        //wo_bShaderLoadAttempted = true;
-        //return;
-        
-
         // If paths set (may be default)
         if (wo_fnmShaderVsFileName.Length() != 0 
             && wo_fnmShaderFsFileName.Length() != 0 

@@ -5,7 +5,7 @@
 #define STXF_BLEND_ALPHA    0x10
 #define STXF_BLEND_ADD      0x20
 #define STXF_BLEND_SHADE    0x30
-#define MAX_LIGHT_SOURCES   16
+#define MAX_LIGHT_SOURCES   32
 
 // Light tpes
 #define LT_POINT            0
