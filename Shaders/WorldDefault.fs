@@ -18,6 +18,10 @@
 #define MTL_NORMAL          1
 #define MTL_HEIGHT          2
 
+// Height map constants
+// TODO: Maybe need uniform variable for it (can depend on texture & mapping)
+#define HM_SCALE          0.025f
+
 // Light source description
 struct Light
 {
@@ -35,9 +39,10 @@ struct Light
 in GS_OUT {
     vec2 uv[7];
     vec4 color;
-    vec3 position;  // view-space position
-    vec3 normal;    // view-space normal
-    mat3 TBN;       // TBN matrix for normal mapping
+    vec3 position;       // view-space position
+    vec3 normal;         // view-space normal
+    mat3 TBN;            // TBN matrix for normal mapping
+    float TBNhandedness; // TBN handeness (orientation) depending on UVs
 } fs_in;
 
 layout(location = 0) out vec4 fragColor;
@@ -139,13 +144,74 @@ vec4 getLayerColor(int index, vec2 uv)
     }
 }
 
+vec2 parallaxOcclusionMapping(vec2 uv, vec3 viewDirTangent, int numStepsMin, int numStepsMax)
+{
+    // Sample height (white - max height, black - max depth)
+    float height = 1.0 - texture(texHeight, uv).r;
+
+    // Slope (cosine) for normalized viewDirTangent (vector to camera in tangent space)
+    float slope = abs(viewDirTangent.z);
+
+    // Get actual number of steps depending on view vector slope (more for bigger angles)
+    int numSteps = int(mix(float(numStepsMax), float(numStepsMin), slope));
+
+    // Initialize ray marching
+    float layerDepth = 1.0f / float(numSteps);                 // One layer depth (step size)
+    float safeZ = max(abs(viewDirTangent.z), 0.0001);
+    vec2 deltaUV = viewDirTangent.xy * HM_SCALE / safeZ;             // Full UV displacement, scaled by height scale
+    vec2 currentUV = uv;                                             // Start from current UV
+    float currentDepth = 1.0f;                                       // Start from max depth (z = height scale)
+    float lastSampledHeight = height;                                // Last sampled height
+
+    // Ray marching: move downward (z decreases)
+    for(int i = 0; i < numSteps; i++)
+    {
+        // If sampled height is above current depth - intersected (stop marching)
+        if(lastSampledHeight > currentDepth){
+            break;
+        }
+
+        // Move UV and depth in opposite to view-vector direction
+        currentUV -= deltaUV * layerDepth;
+        currentDepth -= layerDepth;
+        lastSampledHeight = 1.0 - texture(texHeight, currentUV).r;
+    }
+
+    // Refine with interpolation (use previous and last sampled heights)
+    vec2 prevUV = currentUV + deltaUV * layerDepth;
+    float prevSampledHeight = 1.0 - texture(texHeight, prevUV).r;
+    float afterDepth = lastSampledHeight - currentDepth;
+    float beforeDepth = prevSampledHeight - (currentDepth + layerDepth);
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    return mix(currentUV, prevUV, weight);
+}
+
 void main() 
 {
+    // UV maps for all textures
+    vec2 specUV = fs_in.uv[4];
+    vec2 normUV = fs_in.uv[5];
+    vec2 dispUV = fs_in.uv[6];
+
+    if(bool(materialUsage[MTL_HEIGHT]))
+    {
+        // Transform view direction (fragment to view) to tangent space
+        vec3 viewDir = normalize(fs_in.position);
+        vec3 viewDirTangent = normalize(transpose(fs_in.TBN) * viewDir);
+        vec2 pomUV = parallaxOcclusionMapping(dispUV, viewDirTangent, 20, 80);
+        // All textures now uses POM uv
+        specUV = pomUV;
+        normUV = pomUV;
+        dispUV = pomUV;
+    }
+
     // Get albedo color from texture layers
     vec4 albedo = vec4(0.0f);
     for (int i = 0; i < activeLayers; i++) 
     {
-        vec4 texColor = getLayerColor(i, fs_in.uv[i]);
+        // If displace map used - use displaced UV's for color layers
+        vec2 uv = bool(materialUsage[MTL_HEIGHT]) ? dispUV : fs_in.uv[i];
+        vec4 texColor = getLayerColor(i, uv);
 
         // OPAQUE
         if (blendTypes[i] == STXF_BLEND_OPAQUE) {
@@ -161,7 +227,7 @@ void main()
         }
         // ADD
         else if (blendTypes[i] == STXF_BLEND_ADD) { 
-            albedo += albedo;
+            albedo += texColor;
         }
     }
     albedo *= fs_in.color;
@@ -177,12 +243,13 @@ void main()
 
         if(bool(materialUsage[MTL_SPECULAR]))
         {
-            specIntensity = texture2D(texSpec, fs_in.uv[4]).r;
+            specIntensity = texture2D(texSpec, specUV).r;
         }
 
         if(bool(materialUsage[MTL_NORMAL]))
         {
-            vec3 normalTangent = texture(texNormal, fs_in.uv[5]).rgb * 2.0 - 1.0;
+            vec3 normalTangent = texture(texNormal, normUV).rgb * 2.0 - 1.0;
+            normalTangent.y *= fs_in.TBNhandedness;
             normal = normalize(fs_in.TBN * normalTangent);
         }
 

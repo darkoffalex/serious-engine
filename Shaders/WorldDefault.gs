@@ -12,9 +12,10 @@ in VS_OUT {
 out GS_OUT {
     vec2 uv[7];
     vec4 color;
-    vec3 position; // view-space position (pre-interpoaltion)
-    vec3 normal;   // view-space normal (pre-interpolation)
-    mat3 TBN;      // TBN matrix for normal mapping
+    vec3 position;       // view-space position (pre-interpoaltion)
+    vec3 normal;         // view-space normal (pre-interpolation)
+    mat3 TBN;            // TBN matrix for normal mapping
+    float TBNhandedness; // TBN handeness (orientation) depending on UVs
 } gs_out;
 
 void main()
@@ -23,6 +24,7 @@ void main()
     vec3 p0 = gs_in[0].position;
     vec3 p1 = gs_in[1].position;
     vec3 p2 = gs_in[2].position;
+    // TODO: May be use displace texture UVs for TBN, if displace is used?
     vec2 uv0 = gs_in[0].uv[5]; // 5 - index for normal map texture's UV
     vec2 uv1 = gs_in[1].uv[5];
     vec2 uv2 = gs_in[2].uv[5];
@@ -42,12 +44,15 @@ void main()
     float det = deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y;
     float invDet = det != 0.0 ? 1.0 / det : 1.0; // Avoid division by zero
     vec3 tangent = normalize((deltaUV2.y * edge1 - deltaUV1.y * edge2) * invDet);
+    tangent = length(tangent) > 0.0001 ? normalize(tangent) : vec3(1.0, 0.0, 0.0);
 
     // Orthogonalize tangent
     tangent = normalize(tangent - normal * dot(tangent, normal));
 
     // Calculate bitangent directly
-    vec3 bitangent = normalize(cross(normal, tangent));
+    float handedness = det < 0.0 ? -1.0 : 1.0;
+    vec3 bitangent = normalize(cross(normal, tangent) * handedness);
+    gs_out.TBNhandedness = handedness;
 
     // Form TBN matrix
     mat3 TBN = mat3(tangent, bitangent, normal);
