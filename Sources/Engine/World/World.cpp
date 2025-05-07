@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "stdh.h"
 
 #include <Engine/Base/Console.h>
+#include <Engine/Base/Utils.h>
 #include <Engine/Math/Float.h>
 #include <Engine/World/World.h>
 #include <Engine/World/WorldEditingProfile.h>
@@ -92,16 +93,16 @@ CWorld::CWorld(void)
   , wo_baBrushes(*new CBrushArchive)
   , wo_taTerrains(*new CTerrainArchive)
   , wo_ulSpawnFlags(0)
-  , wo_bShaderLoaded(FALSE)
-  , wo_bShaderLoadAttempted(FALSE)
-  , wo_pShader(nullptr)
-  , wo_pShaderUboLights(nullptr)
-  , wo_fnmShaderVsFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.vs"))
-  , wo_fnmShaderGsFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.gs"))
-  , wo_fnmShaderFsFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.fs"))
+  , wo_sBrushShaderInfo({})
+  , wo_sModelShaderInfo({})
 {
   wo_baBrushes.ba_pwoWorld = this;
   wo_taTerrains.ta_pwoWorld = this;
+
+  // paths to shaders (hardcoded for now)
+  wo_sBrushShaderInfo.gsi_fnmVsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.vs"));
+  wo_sBrushShaderInfo.gsi_fnmGsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.gs"));
+  wo_sBrushShaderInfo.gsi_fnmFsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.fs"));
 
   // create empty texture movements
   wo_attTextureTransformations.New(256);
@@ -149,8 +150,15 @@ CWorld::~CWorld()
   delete &wo_baBrushes;
   delete &wo_taTerrains;
 
-  delete wo_pShader;
-  delete wo_pShaderUboLights;
+  if (wo_sBrushShaderInfo.gsi_bLoaded)
+  {
+      wo_sBrushShaderInfo.Unload();
+  }
+
+  if (wo_sModelShaderInfo.gsi_bLoaded)
+  {
+      wo_sModelShaderInfo.Unload();
+  }
 }
 
 /*
@@ -1168,4 +1176,129 @@ void CWorld::ClearMarkedForUseFlag(void)
       }
     }
   }
+}
+
+void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
+{
+    // Exit if already tried to load
+    if (gsi_bLoadAttempted && !bForce)
+        return;
+
+    // Attempted
+    gsi_bLoadAttempted = TRUE;
+
+    // Exit if some file paths missing
+    if (gsi_fnmVsSource.Length() == 0 || gsi_fnmGsSource.Length() == 0 || gsi_fnmFsSource.Length() == 0)
+        return;
+
+    try
+    {
+        // Unload if already loaded
+        if (gsi_bLoaded == TRUE)
+        {
+            gsi_bLoaded = FALSE;
+            Unload();
+        }
+
+        // Load shader sources
+        auto strVsSource = Utils::LoadFileAsText(gsi_fnmVsSource.str_String);
+        auto strGsSource = Utils::LoadFileAsText(gsi_fnmGsSource.str_String);
+        auto strFsSource = Utils::LoadFileAsText(gsi_fnmFsSource.str_String);
+
+        // Map of sources
+        // TODO: Need some refactoring (usning not wrapped GL_ varaibles in wrapper methods - not good)
+        std::unordered_map<UINT, std::string> shaderSources = {
+            {GL_VERTEX_SHADER, strVsSource},
+            {GL_GEOMETRY_SHADER, strGsSource},
+            {GL_FRAGMENT_SHADER, strFsSource}
+        };
+
+        // Load shader
+        gsi_pShader = new CGfxShader(shaderSources);
+
+        // Prepare uniform stuff depending on type
+        switch (eUniformType)
+        {
+            case SGfxShaderInfo::SUT_BRUSH:
+            {
+                // Allocate uniform buffer
+                gsi_pShaderUboLights = new CGfxUniformBuffer(sizeof(SShaderLight) * MAX_BRUSH_LIGHTS, 0, GL_STATIC_DRAW);
+
+                // Get uniform IDs
+                auto uniformIds = gsi_pShader->UniformIds({
+                    "texLayer0",     // 0
+                    "texLayer1",     // 1
+                    "texLayer2",     // 2
+                    "texShadow",     // 3
+                    "texSpec",       // 4
+                    "texNormal",     // 5
+                    "texHeight",     // 6
+                    "activeLayers",  // 7
+                    "blendTypes",    // 8
+                    "useShadow",     // 9
+                    "materialUsage", // 10
+                    "activeLights",  // 11
+                    "useLights"      // 12
+                });
+
+                // Map uniform ids to structure
+                gsi_sBrushUniforms.wsu_iTexLayer0 = uniformIds[0];
+                gsi_sBrushUniforms.wsu_iTexLayer1 = uniformIds[1];
+                gsi_sBrushUniforms.wsu_iTexLayer2 = uniformIds[2];
+                gsi_sBrushUniforms.wsu_iTexShadow = uniformIds[3];
+                gsi_sBrushUniforms.wsu_iTexSpec = uniformIds[4];
+                gsi_sBrushUniforms.wsu_iTexNormal = uniformIds[5];
+                gsi_sBrushUniforms.wsu_iTexHeight = uniformIds[6];
+                gsi_sBrushUniforms.wsu_iActiveLayers = uniformIds[7];
+                gsi_sBrushUniforms.wsu_iLayersBlending = uniformIds[8];
+                gsi_sBrushUniforms.wsu_iUseShadow = uniformIds[9];
+                gsi_sBrushUniforms.wsu_iMaterialUsage = uniformIds[10];
+                gsi_sBrushUniforms.wsu_iActiveLights = uniformIds[11];
+                gsi_sBrushUniforms.wsu_iUseLights = uniformIds[12];
+                break;
+            }
+
+            case SGfxShaderInfo::SUT_MODELS:
+            {
+                // Allocate uniform buffer
+                gsi_pShaderUboLights = new CGfxUniformBuffer(sizeof(SShaderLight) * MAX_MODEL_LIGHTS, 0, GL_STATIC_DRAW);
+
+                // Get uniform IDs
+                auto uniformIds = gsi_pShader->UniformIds({
+                    "texColor ",     // 0
+                    "texSpec",       // 1
+                    "texNormal",     // 2
+                    "texHeight",     // 3
+                    "materialUsage", // 4
+                    "activeLights",  // 5
+                    "useLights"      // 6
+                });
+
+                // Map uniform ids to structure
+                gsi_sModelUniforms.wsu_iTexColor = uniformIds[0];
+                gsi_sModelUniforms.wsu_iTexSpec = uniformIds[1];
+                gsi_sModelUniforms.wsu_iTexNormal = uniformIds[2];
+                gsi_sModelUniforms.wsu_iTexHeight = uniformIds[3];
+                gsi_sModelUniforms.wsu_iMaterialUsage = uniformIds[4];
+                gsi_sModelUniforms.wsu_iActiveLights = uniformIds[5];
+                gsi_sModelUniforms.wsu_iUseLights = uniformIds[6];
+                break;
+            }
+            default:
+                break;
+        }
+
+        // Mark as loaded
+        gsi_bLoaded = TRUE;
+    }
+    catch (std::exception& ex)
+    {
+        FatalError("%s", ex.what());
+    }
+}
+
+void SGfxShaderInfo::Unload()
+{
+    delete gsi_pShader;
+    delete gsi_pShaderUboLights;
 }

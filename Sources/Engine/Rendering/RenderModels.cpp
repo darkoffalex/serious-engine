@@ -647,6 +647,18 @@ void CRenderer::RenderModels( BOOL bBackground)
     }
     else
     {
+      // shader usage status
+      bool bShaderUsed = false;
+      auto* pWorld = dm.dm_penModel->GetWorld();
+
+      // use shader program if loaded
+      if (pWorld->wo_sModelShaderInfo.gsi_bLoaded)
+      {
+          // TODO: Use shader program
+
+          bShaderUsed = true;
+      }
+
       // render the model with its shadow
       CModelObject &moModelObject = *dm.dm_pmoModel;
       RenderOneModel( en, moModelObject, en.GetLerpedPlacement(), dm.dm_fMipFactor, TRUE, dm.dm_ulFlags);
@@ -675,6 +687,12 @@ void CRenderer::RenderModels( BOOL bBackground)
         plSelection.Translate_OwnSystem( FLOAT3D(0.0f, boxModel.Max()(2), 0.0f));
         // render the selection model without shadow
         RenderOneModel( en, *_wrpWorldRenderPrefs.wrp_pmoSelectedEntity, plSelection, dm.dm_fMipFactor, FALSE, 0);
+      }
+
+      // disable shader (if used)
+      if (bShaderUsed)
+      {
+          gfxUseProgram(0);
       }
     }
 

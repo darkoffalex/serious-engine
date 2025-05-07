@@ -486,7 +486,7 @@ void CBrushShadowMap::FindLightRectangle(CLightSource &ls, class CLightRectangle
   CBrushMip* pbm = pbsc->bsc_pbmBrushMip;
   CBrush3D* pbr = pbm->bm_pbrBrush;
   CWorld* pwo = pbr->br_penEntity->GetWorld();
-  BOOL bShadersEnabled = pwo->wo_bShaderLoaded;
+  BOOL bShadersEnabled = pwo->wo_sBrushShaderInfo.gsi_bLoaded;
 
   // if the light is directional OR shader is used
   if( ls.ls_ulFlags&LSF_DIRECTIONAL)

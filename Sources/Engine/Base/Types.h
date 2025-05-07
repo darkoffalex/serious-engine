@@ -147,7 +147,9 @@ typedef ULONG   COLOR;  // color is always in 32 bit true-color format
 )
 
 // max lights per brush polygon group (for shader purposes only)
-#define MAX_BRUSH_POLYGON_LIGHTS 32
+#define MAX_BRUSH_LIGHTS 32
+// max lights per rendered model (for shader purposes only)
+#define MAX_MODEL_LIGHTS 8
 
 // z-buffer depth constants
 #define ZBUF_FRONT  (0.0f)

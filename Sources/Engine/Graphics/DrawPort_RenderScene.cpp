@@ -422,7 +422,7 @@ static void RSBinToGroups(ScenePolygon *pspoFirst, CWorld* pWorld)
           } 
           // Mix color in the first texture layer (only for non-shader cases)
           // Don't need to update poly layer in case of shader enabled (directional & ambient calcualted in shader)
-          if (!pWorld->wo_bShaderLoaded)
+          if (!pWorld->wo_sBrushShaderInfo.gsi_bLoaded)
           {
               COLOR& colTotal = pspo->spo_acolColors[0];
               COLOR  colLayer = pspo->spo_acolColors[3];
@@ -906,7 +906,7 @@ static void RSPrepareMaterialLayers(ScenePolygon* pspo)
         ->br_penEntity
         ->en_pwoWorld;
 
-    if (!world->wo_bShaderLoaded) return;
+    if (!world->wo_sBrushShaderInfo.gsi_bLoaded) return;
 
     for (INDEX iLayer = 0; iLayer < 3; iLayer++)
     {
@@ -1528,7 +1528,7 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
   }
 }
 
-void RSUpdateShaderUniforms(const SWorldShaderUniforms& rsUniforms, ScenePolygon* pspoGroup, ULONG ulGroupFlags)
+void RSUpdateShaderUniforms(const SBrushShaderUniforms& rsUniforms, ScenePolygon* pspoGroup, ULONG ulGroupFlags)
 {
     // Prepare data for shader variables
     INT32 iaTextures[3] = { -1, -1, -1 };
@@ -1666,7 +1666,7 @@ void RSUpdateShaderUniforms(const SWorldShaderUniforms& rsUniforms, ScenePolygon
     gfxUniform1i(rsUniforms.wsu_iTexSpec, TEX_UNIT_SPECULAR);
     gfxUniform1i(rsUniforms.wsu_iTexNormal, TEX_UNIT_NORMAL);
     gfxUniform1i(rsUniforms.wsu_iTexHeight, TEX_UNIT_HEIGHT);
-    gfxUniform1iv(rsUniforms.wsi_iMaterialUsage, 3, iaMaterialUsage);
+    gfxUniform1iv(rsUniforms.wsu_iMaterialUsage, 3, iaMaterialUsage);
 }
 
 // internal group rendering routine
@@ -1695,14 +1695,14 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                               |  GF_TX0_TX1_TX2_SHD);
 
   // check for shader, use if set
-  if (pWorld && pWorld->wo_pShader)
+  if (pWorld && pWorld->wo_sBrushShaderInfo.gsi_bLoaded)
   {
       // Use shader program
-      gfxUseProgram(pWorld->wo_pShader->Id());
+      gfxUseProgram(pWorld->wo_sBrushShaderInfo.gsi_pShader->Id());
       bUsedShader = TRUE;
 
       // Bind light-sources UBO
-      gfxBindBuffer(GL_UNIFORM_BUFFER, pWorld->wo_pShaderUboLights->Id());
+      gfxBindBuffer(GL_UNIFORM_BUFFER, pWorld->wo_sBrushShaderInfo.gsi_pShaderUboLights->Id());
 
       // MatriX & offset to transform coordinates
       const FLOATmatrix3D& mViewer = _ppr->pr_ViewerRotationMatrix;
@@ -1718,7 +1718,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
       // To avoid adding same light-sources multiple times (when same light affects multiple polygons)
       std::vector<CLightSource*> cAddedLights;
-      cAddedLights.reserve(MAX_BRUSH_POLYGON_LIGHTS);
+      cAddedLights.reserve(MAX_BRUSH_LIGHTS);
 
       // For all polygons in group
       for (ScenePolygon* pspo = pspoGroup; pspo != NULL; pspo = pspo->spo_pspoSucc)
@@ -1750,7 +1750,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                       continue;
 
                   // If reached max light count - break the cycle
-                  if (iLightCount >= MAX_BRUSH_POLYGON_LIGHTS)
+                  if (iLightCount >= MAX_BRUSH_LIGHTS)
                       break;
                       
                   // Get placement & orientation (world-space)
@@ -1783,7 +1783,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                   }
 
                   // Prepare data
-                  SWorldShaderLight sLightData = {};
+                  SShaderLight sLightData = {};
                   sLightData.wsl_vPosition = vLightView;
                   sLightData.wsl_vDirection = vDirectionView;
                   sLightData.wsl_vColor = FLOAT3D((FLOAT)ubColor[0] / 255.0f, (FLOAT)ubColor[1] / 255.0f, (FLOAT)ubColor[2] / 255.0f);
@@ -1793,7 +1793,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                   sLightData.wsl_uType = (UINT)eType;
 
                   // Update UBO
-                  gfxBufferSubData(GL_UNIFORM_BUFFER, sizeof(SWorldShaderLight) * iLightCount, sizeof(SWorldShaderLight), &sLightData);
+                  gfxBufferSubData(GL_UNIFORM_BUFFER, sizeof(SShaderLight) * iLightCount, sizeof(SShaderLight), &sLightData);
 
                   // Count increases
                   iLightCount++;
@@ -1802,11 +1802,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
       }
 
       // Pass lighting usage information
-      gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
-      gfxUniform1i(pWorld->wo_sShaderUniformIds.wsu_iActiveLights, iLightCount);
+      auto& uniformIds = pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms;
+      gfxUniform1i(uniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
+      gfxUniform1i(uniformIds.wsu_iActiveLights, iLightCount);
 
       // Rebind active UBO to binding 0
-      gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, pWorld->wo_pShaderUboLights->Id());
+      gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, pWorld->wo_sBrushShaderInfo.gsi_pShaderUboLights->Id());
       gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
   }
 
@@ -1836,7 +1837,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
       if (bUsedShader)
       {
-          RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+          RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
       }
 
       RSRenderTEX_SHD(pspoGroup, 0);
@@ -1849,7 +1850,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
       if (bUsedShader)
       {
-          RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+          RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
       }
 
       RSRender2TEX(pspoGroup, 1);
@@ -1861,7 +1862,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
       if (bUsedShader)
       {
-          RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+          RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
       }
 
       RSSetTextureColors(pspoGroup, GF_TX0 | GF_TX2);
@@ -1879,7 +1880,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
     }
 
     RSRender3TEX( pspoGroup);
@@ -1893,7 +1894,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
     }
 
     RSRender2TEX_SHD( pspoGroup, 1);
@@ -1907,7 +1908,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
     }
 
     RSRender2TEX_SHD( pspoGroup, 2);
@@ -1924,7 +1925,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
     }
 
     RSRender3TEX_SHD( pspoGroup);
@@ -1946,7 +1947,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
     }
 
     RSRenderTEX_SHD( pspoGroup, 2);
@@ -1993,7 +1994,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
     }
 
     RSRenderTEX( pspoGroup, 0);
@@ -2012,7 +2013,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
     }
 
     RSRenderTEX( pspoGroup, 1);
@@ -2026,7 +2027,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
 
     if (bUsedShader)
     {
-        RSUpdateShaderUniforms(pWorld->wo_sShaderUniformIds, pspoGroup, ulGroupFlags);
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
     }
 
     RSRenderTEX( pspoGroup, 2);

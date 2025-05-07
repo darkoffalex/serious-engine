@@ -948,8 +948,9 @@ void CRenderer::InitClippingRectangle(PIX pixMinI, PIX pixMinJ, PIX pixSizeI, PI
 void RenderView(CWorld &woWorld, CEntity &enViewer,
   CAnyProjection3D &prProjection, CDrawPort &dpDrawport)
 {
-  // Load world's shader if not loaded yet (once, beefore render)
-  woWorld.LoadWorldShaderOnce();
+  // load world's brush & model shaders if not loaded yet (once, beefore render)
+  woWorld.wo_sBrushShaderInfo.TryLoadOnce(SGfxShaderInfo::EUniformTypes::SUT_BRUSH, false);
+  woWorld.wo_sModelShaderInfo.TryLoadOnce(SGfxShaderInfo::EUniformTypes::SUT_MODELS, false);
   
   // let the worldbase execute its render function
   if (woWorld.wo_pecWorldBaseClass!=NULL

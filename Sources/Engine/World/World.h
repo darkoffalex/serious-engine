@@ -52,8 +52,8 @@ enum WorldShaderLightType : UINT {
     WSLT_SPOT
 };
 
-// Shader uniform IDs
-struct SWorldShaderUniforms
+// Shader uniform IDs for brushes
+struct SBrushShaderUniforms
 {
     INT32 wsu_iTexLayer0;
     INT32 wsu_iTexLayer1;
@@ -65,13 +65,26 @@ struct SWorldShaderUniforms
     INT32 wsu_iLayersBlending;
     INT32 wsu_iActiveLayers;
     INT32 wsu_iUseShadow;
-    INT32 wsi_iMaterialUsage;
+    INT32 wsu_iMaterialUsage;
+    INT32 wsu_iActiveLights;
+    INT32 wsu_iUseLights;
+};
+
+// Shader uniform IDs for models
+struct SModelShaderUniforms
+{
+    INT32 wsu_iTexColor;
+    INT32 wsu_iTexSpec;
+    INT32 wsu_iTexNormal;
+    INT32 wsu_iTexHeight;
+    INT32 wsu_iTexReflection;
+    INT32 wsu_iMaterialUsage;
     INT32 wsu_iActiveLights;
     INT32 wsu_iUseLights;
 };
 
 // Light-source shader UBO entry
-struct SWorldShaderLight
+struct SShaderLight
 {
     FLOAT3D wsl_vPosition;    // 12 bytes + 4 bytes padding = 16 bytes
     FLOAT   _pad0;            // 4 bytes padding
@@ -89,6 +102,38 @@ struct SWorldShaderLight
 
     // Explicit paddig for array align (96 bytes)
     FLOAT   _padEnd[3];       // 12 bytes (3 * 4)
+};
+
+struct SGfxShaderInfo
+{
+    enum EUniformTypes : INDEX
+    {
+        SUT_NONE = 0,
+        SUT_BRUSH,
+        SUT_MODELS,
+        SUT_POST_PROCESS,
+    };
+
+    // Load status
+    EUniformTypes gsi_eType = SUT_NONE;
+    BOOL  gsi_bLoaded = FALSE;
+    BOOL  gsi_bLoadAttempted = FALSE;
+
+    // Shader source files
+    CTFileName gsi_fnmVsSource = CTFileName(CTString(""));
+    CTFileName gsi_fnmGsSource = CTFileName(CTString(""));
+    CTFileName gsi_fnmFsSource = CTFileName(CTString(""));
+
+    // Shader program & shader UBO objects (for rendering purposes)
+    CGfxShader* gsi_pShader = nullptr;
+    CGfxUniformBuffer* gsi_pShaderUboLights = nullptr;
+
+    // Uniform locations
+    SBrushShaderUniforms gsi_sBrushUniforms;
+    SModelShaderUniforms gsi_sModelUniforms;
+
+    void TryLoadOnce(EUniformTypes eUniformType, BOOL bForce = false);
+    void Unload();
 };
 
 class ENGINE_API CWorld {
@@ -145,6 +190,11 @@ public:
   CListHead wo_lhTimers;      // timer scheduled entities
   CListHead wo_lhMovers;        // entities that want to/have to move
   BOOL wo_bPortalLinksUpToDate; // set if portal-sector links are up to date
+
+  SGfxShaderInfo wo_sBrushShaderInfo;
+  SGfxShaderInfo wo_sModelShaderInfo;
+
+  /*
   BOOL wo_bShaderLoaded; // Shader program instance created & loaded
   BOOL wo_bShaderLoadAttempted; // Shader loading tried once
 
@@ -155,6 +205,7 @@ public:
   CGfxShader* wo_pShader; // Shader wrapper pointer
   CGfxUniformBuffer* wo_pShaderUboLights; // Shader light sources UBO buffer
   SWorldShaderUniforms wo_sShaderUniformIds; // Shader uniform IDs (retrieved at loading)
+  */
 
   /* Initialize collision grid. */
   void InitCollisionGrid(void);
@@ -325,9 +376,6 @@ public:
 
   /* Load just world brushes from a file with entire world information. */
   void LoadBrushes_t(const CTFileName &fnmWorld); // throw char *
-
-  /* Loads and creates shader program instance if not loaded yet (called once on rendering) */
-  void LoadWorldShaderOnce(BOOL force = FALSE);
 
   /* Update sectors after brush vertex moving */
   void UpdateSectorsAfterVertexChange( CBrushVertexSelection &selVertex);

@@ -1008,7 +1008,7 @@ void CLayerMixer::AddOneLayerPoint( CBrushShadowLayer *pbsl, UBYTE *pubMask, UBY
   CWorld* pwo = pbr->br_penEntity->GetWorld();
 
   // If using shaders - only shadows required in shadow-maps (no lighting needed)
-  if (pwo->wo_bShaderLoaded)
+  if (pwo->wo_sBrushShaderInfo.gsi_bLoaded)
   {
       if (pubMask == NULL)
       {
@@ -1441,7 +1441,7 @@ void CLayerMixer::AddOneLayerDirectional( CBrushShadowLayer *pbsl, UBYTE *pubMas
   CWorld* pwo = pbr->br_penEntity->GetWorld();
 
   // for shader pipeline we need only shadows, no light color required
-  if (pwo->wo_bShaderLoaded)
+  if (pwo->wo_sBrushShaderInfo.gsi_bLoaded)
   {
       FLOAT fIntensity = 1.0f / (FLOAT)pbsl->bsl_pbsmShadowMap->GetShadowLayersCount();
       lm_colLight = RGBAFloatToColor(fIntensity, fIntensity, fIntensity, fIntensity);
