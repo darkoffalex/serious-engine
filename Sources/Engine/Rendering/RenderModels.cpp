@@ -13,6 +13,8 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
+#include <Engine/Graphics/GfxShader.h>
+#include <Engine/Graphics/GfxUniformBuffer.h>
 
 extern INDEX mdl_iShadowQuality;
 // model shadow precision
@@ -351,6 +353,24 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
                                           fTotalShadowIntensity, vTotalLightDirection, plFloorPlane);
   }
 
+  // if using shader
+  auto* pWorld = en.GetWorld();
+  if (pWorld->wo_sModelShaderInfo.gsi_bLoaded)
+  {
+      // shading status
+      BOOL bShadows = _wrpWorldRenderPrefs.wrp_shtShadows != CWorldRenderPrefs::ShadowsType::SHT_NONE;
+      BOOL bFullBright = FALSE; // TODO: Get full bright status
+      BOOL bCalcLighting = bShadows && !bFullBright;
+
+      // TODO: Pass light information to shader
+
+      // pass light count & shading status to shader
+      auto& uniformIds = pWorld->wo_sModelShaderInfo.gsi_sBrushUniforms;
+      gfxUniform1i(uniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
+      gfxUniform1i(uniformIds.wsu_iActiveLights, 0);
+  }
+
+
   // let the entity adjust shading parameters if it wants to
   mdl_iShadowQuality = Clamp( mdl_iShadowQuality, 0L, 3L);
   const BOOL bAllowShadows = en.AdjustShadingParameters( vTotalLightDirection, colLight, colAmbient);
@@ -433,7 +453,7 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
   // if the entity is not the viewer, or this is not primary renderer
   if( re_penViewer!=&en) {
     // render model
-    moModel.RenderModel(rm);
+    moModel.RenderModel(rm, en.GetWorld());
   // if the entity is viewer
   } else {
     // just remember the shading info (needed for first-person-weapon rendering)
@@ -654,8 +674,7 @@ void CRenderer::RenderModels( BOOL bBackground)
       // use shader program if loaded
       if (pWorld->wo_sModelShaderInfo.gsi_bLoaded)
       {
-          // TODO: Use shader program
-
+          gfxUseProgram(pWorld->wo_sModelShaderInfo.gsi_pShader->Id());
           bShaderUsed = true;
       }
 

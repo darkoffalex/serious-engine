@@ -100,9 +100,13 @@ CWorld::CWorld(void)
   wo_taTerrains.ta_pwoWorld = this;
 
   // paths to shaders (hardcoded for now)
-  wo_sBrushShaderInfo.gsi_fnmVsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.vs"));
-  wo_sBrushShaderInfo.gsi_fnmGsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.gs"));
-  wo_sBrushShaderInfo.gsi_fnmFsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\WorldDefault.fs"));
+  wo_sBrushShaderInfo.gsi_fnmVsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Brush\\Default.vs"));
+  wo_sBrushShaderInfo.gsi_fnmGsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Brush\\Default.gs"));
+  wo_sBrushShaderInfo.gsi_fnmFsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Brush\\Default.fs"));
+
+  wo_sModelShaderInfo.gsi_fnmVsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Model\\Default.vs"));
+  wo_sModelShaderInfo.gsi_fnmGsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Model\\Default.gs"));
+  wo_sModelShaderInfo.gsi_fnmFsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Model\\Default.fs"));
 
   // create empty texture movements
   wo_attTextureTransformations.New(256);

@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 class CAttachmentModelObject;
 class CRenderModel;
 class CModelInfo;
+struct SGfxShaderInfo;
 
 class ENGINE_API CModelObject : public CAnimObject {
 private:
@@ -38,6 +39,7 @@ private:
 
   // API version
   void RenderModel_View( CRenderModel &rm);
+  void RenderShaderModel_View(CRenderModel& rm, const SGfxShaderInfo& sShaderInfo);
   void RenderPatches_View( CRenderModel &rm);
   void AddSimpleShadow_View( CRenderModel &rm, const FLOAT fIntensity, const FLOATplane3D &plShadowPlane);
   void RenderShadow_View( CRenderModel &rm, const CPlacement3D &plLight,
@@ -122,7 +124,7 @@ public:
 
   // model rendering
   void SetupModelRendering( CRenderModel &rm);
-  void RenderModel( CRenderModel &rm);
+  void RenderModel( CRenderModel &rm, CWorld* pWorld = nullptr);
   void RenderPatches( CRenderModel &rm);
   void AddSimpleShadow( CRenderModel &rm, const FLOAT fIntensity,  const FLOATplane3D &plShadowPlane);
   void RenderShadow( CRenderModel &rm, const CPlacement3D &plLight,

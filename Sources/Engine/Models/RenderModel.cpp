@@ -25,6 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/DrawPort.h>
 #include <Engine/Base/Lists.inl>
 #include <Engine/Math/OBBox.h>
+#include <Engine/World/World.h>
 
 #include <Engine/Base/ListIterator.inl>
 #include <Engine/Templates/StaticStackArray.cpp>
@@ -575,7 +576,7 @@ void CModelObject::SetupModelRendering( CRenderModel &rm)
 
 
 // render model
-void CModelObject::RenderModel( CRenderModel &rm)
+void CModelObject::RenderModel( CRenderModel &rm, CWorld* pWorld)
 {
   // skip invisible models
   if( mo_Stretch == FLOAT3D(0,0,0)) return;
@@ -598,7 +599,17 @@ void CModelObject::RenderModel( CRenderModel &rm)
     if( rm.rm_ulFlags&(RMF_FOG|RMF_HAZE)) CalculateBoundingBox( this, rm);
     // render complete model
     rm.SetModelView();
-    RenderModel_View(rm);
+
+    // shader pipeline
+    if (pWorld && pWorld->wo_sModelShaderInfo.gsi_bLoaded)
+    {
+        RenderShaderModel_View(rm, pWorld->wo_sModelShaderInfo);
+    }
+    // regular (fixed) pipeline
+    else
+    {
+        RenderModel_View(rm);
+    }
   }
 
   // if we should draw current frame bounding box
