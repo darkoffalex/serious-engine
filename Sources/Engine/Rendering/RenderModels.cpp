@@ -357,17 +357,84 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
   auto* pWorld = en.GetWorld();
   if (pWorld->wo_sModelShaderInfo.gsi_bLoaded)
   {
-      // shading status
+      // should shade non-full-bright, non-editor models
       BOOL bShadows = _wrpWorldRenderPrefs.wrp_shtShadows != CWorldRenderPrefs::ShadowsType::SHT_NONE;
-      BOOL bFullBright = FALSE; // TODO: Get full bright status
-      BOOL bCalcLighting = bShadows && !bFullBright;
+      BOOL bFullBright = FALSE; // TODO: Get full bright status from underlying polygon
+      BOOL bCalcLighting = bShadows && !bFullBright && en.en_RenderType != CEntity::RT_EDITORMODEL;
 
-      // TODO: Pass light information to shader
+      // MatriX & offset to transform coordinates (hm, may be need handle background models projection cases?)
+      const FLOATmatrix3D& mViewer = re_prProjection->pr_ViewerRotationMatrix;
+      const FLOAT3D& vCameraPos = re_prProjection->pr_vViewerPosition;
+
+      // light-sources affecting model
+      INT iLightCount = 0;
+
+      // for each active light
+      for (INDEX iLight = 0; iLight < _amlLights.Count(); iLight++) 
+      {
+          // Light-source pointer
+          struct ModelLight& ml = _amlLights[iLight];
+          CLightSource* plsLight = ml.ml_plsLight;
+
+          // Skip lens flares
+          if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
+              continue;
+
+          // Skip dark lights
+          if (plsLight->ls_ulFlags & LSF_DARKLIGHT)
+              continue;
+
+          // If reached max light count - break the cycle
+          if (iLightCount >= MAX_MODEL_LIGHTS)
+              break;
+
+          // Get placement & orientation (world-space)
+          const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
+          const FLOATmatrix3D& mLightRotation = plsLight->ls_penEntity->GetRotationMatrix();
+
+          const FLOAT3D& vLight = plLight.pl_PositionVector;
+          const FLOAT3D& vDirection = FLOAT3D(0.0f, 0.0f, -1.0f) * mLightRotation;
+
+          // Convert to view-space
+          const FLOAT3D vLightView = (vLight - vCameraPos) * mViewer;
+          const FLOAT3D vDirectionView = vDirection * mViewer;
+
+          // Colors
+          UBYTE ubColor[3] = { 0, 0, 0 };
+          UBYTE ubAmbient[3] = { 0, 0, 0 };
+          ColorToRGB(plsLight->GetLightColor(), ubColor[0], ubColor[1], ubColor[2]);
+          ColorToRGB(plsLight->GetLightAmbient(), ubAmbient[0], ubAmbient[1], ubAmbient[2]);
+
+          // Light types
+          WorldShaderLightType eType = WorldShaderLightType::WSLT_POINT;
+          if (plsLight->ls_ulFlags & LSF_DIRECTIONAL) {
+              eType = WorldShaderLightType::WSLT_DIRECTIONAL;
+          }
+          else if (plsLight->ls_ulFlags & LSF_CASTSHADOWS) {
+              eType = WorldShaderLightType::WSLT_POINT;
+          }
+          else {
+              eType = WorldShaderLightType::WSLT_AMBIENT;
+          }
+
+          // Prepare data
+          SShaderLight sLightData = {};
+          sLightData.wsl_vPosition = vLightView;
+          sLightData.wsl_vDirection = vDirectionView;
+          sLightData.wsl_vColor = FLOAT3D((FLOAT)ubColor[0] / 255.0f, (FLOAT)ubColor[1] / 255.0f, (FLOAT)ubColor[2] / 255.0f);
+          sLightData.wsl_vColorAmbient = FLOAT3D((FLOAT)ubAmbient[0] / 255.0f, (FLOAT)ubAmbient[1] / 255.0f, (FLOAT)ubAmbient[2] / 255.0f);
+          sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
+          sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
+          sLightData.wsl_uType = (UINT)eType;
+
+          // Count increases
+          iLightCount++;
+      }
 
       // pass light count & shading status to shader
-      auto& uniformIds = pWorld->wo_sModelShaderInfo.gsi_sBrushUniforms;
+      auto& uniformIds = pWorld->wo_sModelShaderInfo.gsi_sModelUniforms;
       gfxUniform1i(uniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
-      gfxUniform1i(uniformIds.wsu_iActiveLights, 0);
+      gfxUniform1i(uniformIds.wsu_iActiveLights, iLightCount);
   }
 
 

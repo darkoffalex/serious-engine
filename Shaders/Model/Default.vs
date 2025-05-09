@@ -20,6 +20,7 @@ void main()
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
     vs_out.position = viewPosition.xyz;
 
-    // Normal (from vertex data)
-    vs_out.normal = gl_Normal;
+    // Normal in view space (from vertex data)
+    vec4 viewNormal = gl_ModelViewMatrix * vec4(gl_Normal, 0.0f);
+    vs_out.normal = viewNormal.xyz;
 }

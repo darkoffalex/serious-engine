@@ -38,6 +38,7 @@ in GS_OUT {
     vec4 color;
     vec3 position;       // view-space position
     vec3 normal;         // view-space normal
+    mat3 TBN;            // TBN matrix for normal mapping
 } fs_in;
 
 layout(location = 0) out vec4 fragColor;
@@ -59,34 +60,107 @@ layout (std140, binding = 0) uniform lighting
     Light lights[MAX_LIGHT_SOURCES];
 };
 
+vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDiffusion, float specInstensity, float shininess)
+{
+    // Fragment-light vector
+    vec3 toLight = light.position.xyz - fragPos;
+    // Fragment-light distance
+    float distance = length(toLight);
+
+    // Out of fall-off radius
+    if (distance > light.fallOff) {
+        return vec3(0.0);
+    }
+
+    // Fragment-light normalized vector (direction)
+    vec3 lightDir = normalize(toLight);
+
+    // Calc diffusion if needed (depends on light fall angle)
+    float diffuse = (calcDiffusion ? max(dot(fragNormal, lightDir), 0.0) : 1.0f);
+
+    // Calc specular (Blinn-Phong)
+    float specular = 0.0;
+    if (specInstensity > 0.0 && diffuse > 0.0) { // Only compute specular if diffuse is non-zero
+        // View direction (in view space, camera at (0,0,0))
+        vec3 viewDir = normalize(-fragPos);
+        // Halfway vector
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        // Specular term
+        specular = pow(max(dot(fragNormal, halfwayDir), 0.0), shininess) * specInstensity;
+    }
+
+    // Attenuation (max for hot-spot, attenuate until fall-off)
+    float attenuation;
+    if (distance <= light.hotSpot) {
+        attenuation = 1.0;
+    } else {
+        attenuation = (light.fallOff - distance) / (light.fallOff - light.hotSpot);
+        attenuation = clamp(attenuation, 0.0, 1.0);
+    }
+
+    // Result color (combine diffuse and specular)
+    return light.color.rgb * (diffuse + specular) * attenuation;
+}
 
 void main() 
 {
-    // Check for color tex
-    bool textured = false;
+    // Get albedo (base) color
+    vec4 albedo = vec4(1.0f);
     if(bool(materialUsage[MTL_COLOR]))
     {
-        fragColor = texture2D(texColor, fs_in.uv).rgba;
-        textured = true;
+        albedo = texture2D(texColor, fs_in.uv).rgba;
     }
 
-    // Check for specular tex
-    if(bool(materialUsage[MTL_SPECULAR]))
+    // Calculate lighting if needed
+    vec3 lighting = vec3(1.0f);
+    if(bool(useLights))
     {
-        fragColor = texture2D(texSpec, fs_in.uv).rgba;
-        textured = true;
-    }
+        lighting = vec3(0.0);
+        float shininess = 64.0f;
+        float specIntensity = 0.0f;
+        vec3 normal = fs_in.normal;
 
-    // Check for normal tex
-    if(bool(materialUsage[MTL_NORMAL]))
-    {
-        fragColor = texture2D(texNormal, fs_in.uv).rgba;
-        textured = true;
-    }
+        if(bool(materialUsage[MTL_SPECULAR]))
+        {
+            specIntensity = texture2D(texSpec, fs_in.uv).r;
+        }
 
-    if(!textured)
-    {
-        // No textures
-        fragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        if(bool(materialUsage[MTL_NORMAL]))
+        {
+            vec3 normalTangent = texture(texNormal, fs_in.uv).rgb * 2.0 - 1.0;
+            normal = normalize(fs_in.TBN * normalTangent);
+        }
+
+        for (int i = 0; i < activeLights; i++)
+        {
+            switch(lights[i].type)
+            {
+                case LT_POINT:
+                    lighting += calculatePointLight(
+                        fs_in.position, 
+                        normal, 
+                        lights[i], 
+                        true, 
+                        specIntensity, 
+                        shininess);
+                break;
+
+                case LT_AMBIENT:
+                    lighting += calculatePointLight(
+                        fs_in.position, 
+                        normal, 
+                        lights[i], 
+                        false, 
+                        specIntensity, 
+                        shininess);
+                break;
+
+                case LT_DIRECTIONAL:
+                break;
+            }
+        }
     }
+    
+    // Final result
+    fragColor = vec4(albedo.rgb * lighting, albedo.a);
 }

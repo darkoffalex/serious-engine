@@ -1269,7 +1269,7 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
 
                 // Get uniform IDs
                 auto uniformIds = gsi_pShader->UniformIds({
-                    "texColor ",     // 0
+                    "texColor",      // 0
                     "texSpec",       // 1
                     "texNormal",     // 2
                     "texHeight",     // 3
