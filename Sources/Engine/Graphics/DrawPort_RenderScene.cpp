@@ -954,11 +954,16 @@ static void RSRenderTEX( ScenePolygon *pspoFirst, INDEX iLayer)
       _ulLastFlags[0]  = pspo->spo_aubTextureFlags[iLayer];
       _iLastFrameNo[0] = iFrameNo;
       // set texture parameters if needed
+      gfxSetTextureUnit(0);
       RSSetTextureWrapping(   pspo->spo_aubTextureFlags[iLayer]);
       RSSetTextureParameters( pspo->spo_aubTextureFlags[iLayer]);
       // prepare texture to be used by accelerator
       ptdTextureData->SetAsCurrent(iFrameNo);
     }
+
+    // prepare material textures (only for shader pipeline)
+    RSPrepareMaterialLayers(pspo);
+
     // render all triangles
     AddElements(pspo);
   }
@@ -982,6 +987,7 @@ static void RSRenderSHD( ScenePolygon *pspoFirst)
     ASSERT( psmShadow!=NULL);  // shadows have been already sorted out
 
     // set texture parameters if needed
+    gfxSetTextureUnit(0);
     RSSetTextureWrapping(   pspo->spo_aubTextureFlags[SHADOWTEXTURE]);
     RSSetTextureParameters( pspo->spo_aubTextureFlags[SHADOWTEXTURE]);
 
@@ -1812,19 +1818,23 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
   }
 
   // mapping for material layers (shader pipeline only)
+  BOOL bUsedMtlTex = FALSE;
   if (bUsedShader)
   {
       if (ulGroupFlags & GF_SPEC)
       {
           RSSetTextureCoords(pspoGroup, 0, TEX_UNIT_SPECULAR, TRUE);
+          bUsedMtlTex = TRUE;
       }
       if (ulGroupFlags & GF_NRM)
       {
           RSSetTextureCoords(pspoGroup, 1, TEX_UNIT_NORMAL, TRUE);
+          bUsedMtlTex = TRUE;
       }
       if (ulGroupFlags & GF_HGH)
       {
           RSSetTextureCoords(pspoGroup, 2, TEX_UNIT_HEIGHT, TRUE);
+          bUsedMtlTex = TRUE;
       }
   }
 
@@ -1957,9 +1967,10 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
   ASSERT( !bUsedMT==!bUsesMT);
 
   // if some multi-tex units were used
-  if( bUsesMT) {
+  if( bUsesMT || bUsedMtlTex)
+  {
     // disable them now
-    for( INDEX i=1; i<_ctUsableTexUnits; i++) {
+    for( INDEX i=1; i<MAXTEXUNITS; i++) {
       gfxSetTextureUnit(i);
       gfxDisableTexture();
     }
@@ -1970,6 +1981,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
   // if group has color for first layer
   if( ulGroupFlags&GF_FLAT)
   { // render colors
+
+    if (bUsedShader)
+    {
+      RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     if( _bTranslucentPass) {
       // set opacity to 50%
       if( !wld_bRenderTextures) RSSetConstantColors( 0x3F3F3F7F);
@@ -1984,7 +2001,24 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     }
     gfxDisableTexture();
     DrawAllElements( pspoGroup);
-  }   
+  }
+
+  // set material texture UV again for single tex rendering
+  if (bUsedShader)
+  {
+      if (ulGroupFlags & GF_SPEC)
+      {
+          RSSetTextureCoords(pspoGroup, 0, TEX_UNIT_SPECULAR, TRUE);
+      }
+      if (ulGroupFlags & GF_NRM)
+      {
+          RSSetTextureCoords(pspoGroup, 1, TEX_UNIT_NORMAL, TRUE);
+      }
+      if (ulGroupFlags & GF_HGH)
+      {
+          RSSetTextureCoords(pspoGroup, 2, TEX_UNIT_HEIGHT, TRUE);
+      }
+  }
 
   // if group has texture for first layer
   if( ulGroupFlags&GF_TX0) {
@@ -2031,6 +2065,18 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
     }
 
     RSRenderTEX( pspoGroup, 2);
+  }
+
+  // disable all material textures (to avoid glitches)
+  if (bUsedMtlTex)
+  {
+      for (INDEX i = 4; i < MAXTEXUNITS; i++) {
+          gfxSetTextureUnit(i);
+          gfxDisableTexture();
+      }
+
+      _iLastUnit = 0;
+      gfxSetTextureUnit(0);
   }
 
   // Disable shader if used

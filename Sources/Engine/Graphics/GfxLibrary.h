@@ -48,7 +48,7 @@ extern CStaticStackArray<INDEX>       _aiCommonQuads;
 #define SQRTTABLESIZE   8192
 #define SQRTTABLESIZELOG2 13
 
-#define GFX_MAXTEXUNITS (4L) // maximum number of supported texture units for multitexturing
+#define GFX_MAXTEXUNITS (7L) // maximum number of supported texture units for multitexturing
 #define GFX_MINSTREAMS  (3L) // minimum number of D3D streams in order to support HW T&L
 #define GFX_MAXLAYERS   (5L) // suggested maximum number of multi-passes per one polygon
 
