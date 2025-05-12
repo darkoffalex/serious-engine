@@ -99,14 +99,14 @@ CWorld::CWorld(void)
   wo_baBrushes.ba_pwoWorld = this;
   wo_taTerrains.ta_pwoWorld = this;
 
-  // paths to shaders (hardcoded for now)
-  wo_sBrushShaderInfo.gsi_fnmVsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Brush\\Default.vs"));
-  wo_sBrushShaderInfo.gsi_fnmGsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Brush\\Default.gs"));
-  wo_sBrushShaderInfo.gsi_fnmFsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Brush\\Default.fs"));
+  // paths to shaders
+  wo_sBrushShaderInfo.gsi_fnmVsSource = CTFileName(CTString(""));
+  wo_sBrushShaderInfo.gsi_fnmGsSource = CTFileName(CTString(""));
+  wo_sBrushShaderInfo.gsi_fnmFsSource = CTFileName(CTString(""));
 
-  wo_sModelShaderInfo.gsi_fnmVsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Model\\Default.vs"));
-  wo_sModelShaderInfo.gsi_fnmGsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Model\\Default.gs"));
-  wo_sModelShaderInfo.gsi_fnmFsSource = CTFileName(CTString("C:\\Users\\Wolfdark\\Repos\\serious-engine\\Shaders\\Model\\Default.fs"));
+  wo_sModelShaderInfo.gsi_fnmVsSource = CTFileName(CTString(""));
+  wo_sModelShaderInfo.gsi_fnmGsSource = CTFileName(CTString(""));
+  wo_sModelShaderInfo.gsi_fnmFsSource = CTFileName(CTString(""));
 
   // create empty texture movements
   wo_attTextureTransformations.New(256);
@@ -1204,10 +1204,15 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
             Unload();
         }
 
+        // Transform paths to absolute
+        CTFileName fnmVsSrcAbs = _fnmApplicationPath + gsi_fnmVsSource;
+        CTFileName fnmGsSrcAbs = _fnmApplicationPath + gsi_fnmGsSource;
+        CTFileName fnmFsSrcAbs = _fnmApplicationPath + gsi_fnmFsSource;
+
         // Load shader sources
-        auto strVsSource = Utils::LoadFileAsText(gsi_fnmVsSource.str_String);
-        auto strGsSource = Utils::LoadFileAsText(gsi_fnmGsSource.str_String);
-        auto strFsSource = Utils::LoadFileAsText(gsi_fnmFsSource.str_String);
+        auto strVsSource = Utils::LoadFileAsText(fnmVsSrcAbs.str_String);
+        auto strGsSource = Utils::LoadFileAsText(fnmGsSrcAbs.str_String);
+        auto strFsSource = Utils::LoadFileAsText(fnmFsSrcAbs.str_String);
 
         // Map of sources
         // TODO: Need some refactoring (usning not wrapped GL_ varaibles in wrapper methods - not good)

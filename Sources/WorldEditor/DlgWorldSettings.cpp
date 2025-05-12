@@ -105,6 +105,14 @@ void CDlgWorldSettings::DoDataExchange(CDataExchange* pDX)
 
     m_strLevelName = pDoc->m_woWorld.GetName();
 
+    // shader files
+    m_fnBrushVsFile = pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmVsSource;
+    m_fnBrushGsFile = pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmGsSource;
+    m_fnBrushFsFile = pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmFsSource;
+    m_fnModelVsFile = pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmVsSource;
+    m_fnModelGsFile = pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmGsSource;
+    m_fnModelFsFile = pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmFsSource;
+
     // get spawn flags
     ULONG ulSpawnFlags = pDoc->m_woWorld.GetSpawnFlags();
     DDX_SPAWN_FLAG_GET( SPF_EASY, IDC_EASY);
@@ -131,6 +139,12 @@ void CDlgWorldSettings::DoDataExchange(CDataExchange* pDX)
 	//{{AFX_DATA_MAP(CDlgWorldSettings)
 	DDX_Control(pDX, IDC_BACKGROUND_COLOR, m_BackgroundColor);
 	DDX_Text(pDX, IDC_PICTURE_FILE_T, m_fnBackgroundPicture);
+    DDX_Text(pDX, IDC_BR_VS_TEXT, m_fnBrushVsFile);
+    DDX_Text(pDX, IDC_BR_GS_TEXT, m_fnBrushGsFile);
+    DDX_Text(pDX, IDC_BR_FS_TEXT, m_fnBrushFsFile);
+    DDX_Text(pDX, IDC_MD_VS_TEXT, m_fnModelVsFile);
+    DDX_Text(pDX, IDC_MD_GS_TEXT, m_fnModelGsFile);
+    DDX_Text(pDX, IDC_MD_FS_TEXT, m_fnModelFsFile);
 	DDX_Text(pDX, IDC_MISSION_DESCRIPTION, m_strMissionDescription);
 	DDX_Text(pDX, IDC_FRONT_VIEW_CENTER_X, m_fFrontViewCenterX);
 	DDX_Text(pDX, IDC_FRONT_VIEW_CENTER_Y, m_fFrontViewCenterY);
@@ -172,6 +186,17 @@ void CDlgWorldSettings::DoDataExchange(CDataExchange* pDX)
 	  pDoc->m_woWorld.wo_fRtH = m_fRightViewHeight;
 	  pDoc->m_woWorld.wo_fRtCZ = m_fRightViewCenterX;
 	  pDoc->m_woWorld.wo_fRtCY = m_fRightViewCenterY;
+
+      // shader files
+      pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmVsSource = CStringA(m_fnBrushVsFile);
+      pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmGsSource = CStringA(m_fnBrushGsFile);
+      pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmFsSource = CStringA(m_fnBrushFsFile);
+      pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_bLoadAttempted = FALSE;
+
+      pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmVsSource = CStringA(m_fnModelVsFile);
+      pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmGsSource = CStringA(m_fnModelGsFile);
+      pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmFsSource = CStringA(m_fnModelFsFile);
+      pDoc->m_woWorld.wo_sModelShaderInfo.gsi_bLoadAttempted = FALSE;
 
     pDoc->m_woWorld.wo_strBackdropObject = CStringA(m_strBackdropObject);
     // try to load object for backdrops
@@ -236,6 +261,12 @@ void CDlgWorldSettings::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CDlgWorldSettings, CDialog)
 	//{{AFX_MSG_MAP(CDlgWorldSettings)
 	ON_BN_CLICKED(IDC_BROWSE_BACKGROUND_PICTURE, OnBrowseBackgroundPicture)
+    ON_BN_CLICKED(IDC_BROWSE_BR_VS, &CDlgWorldSettings::OnBnClickedBrowseBrVs)
+    ON_BN_CLICKED(IDC_BROWSE_BR_GS, &CDlgWorldSettings::OnBnClickedBrowseBrGs)
+    ON_BN_CLICKED(IDC_BROWSE_BR_FS, &CDlgWorldSettings::OnBnClickedBrowseBrFs)
+    ON_BN_CLICKED(IDC_BROWSE_MD_VS, &CDlgWorldSettings::OnBnClickedBrowseMdVs)
+    ON_BN_CLICKED(IDC_BROWSE_MD_GS, &CDlgWorldSettings::OnBnClickedBrowseMdGs)
+    ON_BN_CLICKED(IDC_BROWSE_MD_FS, &CDlgWorldSettings::OnBnClickedBrowseMdFs)
 	ON_BN_CLICKED(IDC_BROWSE_FRONT_VIEW_PICTURE, OnBrowseFrontViewPicture)
 	ON_BN_CLICKED(IDC_BROWSE_RIGHT_VIEW_PICTURE, OnBrowseRightViewPicture)
 	ON_BN_CLICKED(IDC_BROWSE_TOP_VIEW_PICTURE, OnBrowseTopViewPicture)
@@ -361,4 +392,112 @@ void CDlgWorldSettings::OnOK()
 void CDlgWorldSettings::OnApply()
 {
   CDialog::OnOK();
+}
+
+void CDlgWorldSettings::OnBnClickedBrowseBrVs()
+{
+    CTFileName fnChoosedFile = _EngineGUI.FileRequester("Select vertex shader file",
+        FILTER_SHA FILTER_ALL FILTER_END, KEY_NAME_BRUSH_SHADER_DIR, "Shaders\\Brush");
+    if (fnChoosedFile == "") return;
+
+    // get relative path
+    fnChoosedFile.RemoveApplicationPath_t();
+    auto path = fnChoosedFile.FileDir() + fnChoosedFile.FileName() + fnChoosedFile.FileExt();
+
+    // set path
+    m_fnBrushVsFile = path;
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmVsSource = CTString(CStringA(m_fnBrushVsFile));
+
+    UpdateData(FALSE);
+}
+
+void CDlgWorldSettings::OnBnClickedBrowseBrGs()
+{
+    CTFileName fnChoosedFile = _EngineGUI.FileRequester("Select geometry shader file",
+        FILTER_SHA FILTER_ALL FILTER_END, KEY_NAME_BRUSH_SHADER_DIR, "Shaders\\Brush");
+    if (fnChoosedFile == "") return;
+
+    // get relative path
+    fnChoosedFile.RemoveApplicationPath_t();
+    auto path = fnChoosedFile.FileDir() + fnChoosedFile.FileName() + fnChoosedFile.FileExt();
+
+    // set path
+    m_fnBrushGsFile = path;
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmGsSource = CTString(CStringA(m_fnBrushGsFile));
+
+    UpdateData(FALSE);
+}
+
+void CDlgWorldSettings::OnBnClickedBrowseBrFs()
+{
+    CTFileName fnChoosedFile = _EngineGUI.FileRequester("Select fragment shader file",
+        FILTER_SHA FILTER_ALL FILTER_END, KEY_NAME_BRUSH_SHADER_DIR, "Shaders\\Brush");
+    if (fnChoosedFile == "") return;
+
+    // get relative path
+    fnChoosedFile.RemoveApplicationPath_t();
+    auto path = fnChoosedFile.FileDir() + fnChoosedFile.FileName() + fnChoosedFile.FileExt();
+
+    // set path
+    m_fnBrushFsFile = path;
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmFsSource = CTString(CStringA(m_fnBrushFsFile));
+
+    UpdateData(FALSE);
+}
+
+void CDlgWorldSettings::OnBnClickedBrowseMdVs()
+{
+    CTFileName fnChoosedFile = _EngineGUI.FileRequester("Select vertex shader file",
+        FILTER_SHA FILTER_ALL FILTER_END, KEY_NAME_MODEL_SHADER_DIR, "Shaders\\Model");
+    if (fnChoosedFile == "") return;
+
+    // get relative path
+    fnChoosedFile.RemoveApplicationPath_t();
+    auto path = fnChoosedFile.FileDir() + fnChoosedFile.FileName() + fnChoosedFile.FileExt();
+
+    // set path
+    m_fnModelVsFile = path;
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmVsSource = CTString(CStringA(m_fnModelVsFile));
+
+    UpdateData(FALSE);
+}
+
+void CDlgWorldSettings::OnBnClickedBrowseMdGs()
+{
+    CTFileName fnChoosedFile = _EngineGUI.FileRequester("Select geometry shader file",
+        FILTER_SHA FILTER_ALL FILTER_END, KEY_NAME_MODEL_SHADER_DIR, "Shaders\\Model");
+    if (fnChoosedFile == "") return;
+
+    // get relative path
+    fnChoosedFile.RemoveApplicationPath_t();
+    auto path = fnChoosedFile.FileDir() + fnChoosedFile.FileName() + fnChoosedFile.FileExt();
+
+    // set path
+    m_fnModelGsFile = path;
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmGsSource = CTString(CStringA(m_fnModelGsFile));
+
+    UpdateData(FALSE);
+}
+
+void CDlgWorldSettings::OnBnClickedBrowseMdFs()
+{
+    CTFileName fnChoosedFile = _EngineGUI.FileRequester("Select fragment shader file",
+        FILTER_SHA FILTER_ALL FILTER_END, KEY_NAME_MODEL_SHADER_DIR, "Shaders\\Model");
+    if (fnChoosedFile == "") return;
+
+    // get relative path
+    fnChoosedFile.RemoveApplicationPath_t();
+    auto path = fnChoosedFile.FileDir() + fnChoosedFile.FileName() + fnChoosedFile.FileExt();
+
+    // set path
+    m_fnModelFsFile = path;
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmFsSource = CTString(CStringA(m_fnModelFsFile));
+
+    UpdateData(FALSE);
 }

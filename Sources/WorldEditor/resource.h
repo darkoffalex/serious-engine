@@ -183,6 +183,7 @@
 #define IDC_ALLIGN_X                    1015
 #define IDC_VIEW_NOISE_TEXTURE          1015
 #define IDC_FBM_RANDOMIZE               1015
+#define IDC_BROWSE_BR_VS                1015
 #define IDC_BUTTON2                     1016
 #define IDC_OK                          1016
 #define IDC_DELETE_MARKER               1016
@@ -212,17 +213,22 @@
 #define IDC_HEIGHT                      1019
 #define IDC_SCROLL_LEFT                 1019
 #define IDC_GENERATION_SETTINGS         1019
+#define IDC_BROWSE_BR_GS                1019
 #define IDC_BUTTON6                     1020
 #define IDC_LENGHT                      1020
 #define IDC_SCROLL_PG_LEFT              1020
+#define IDC_BROWSE_BR_FS                1020
 #define IDC_BUTTON7                     1021
 #define IDC_SHEARX                      1021
 #define IDC_SCROLL_PG_RIGHT             1021
+#define IDC_BROWSE_MD_VS                1021
 #define IDC_BUTTON8                     1022
 #define IDC_SHEARZ                      1022
 #define IDC_EDIT2                       1022
+#define IDC_BROWSE_MD_GS                1022
 #define IDC_BUTTON9                     1023
 #define IDC_JOIN_ON_TOP                 1023
+#define IDC_BROWSE_MD_FS                1023
 #define IDC_BUTTON10                    1024
 #define IDC_CLOSED                      1024
 #define IDC_BUTTON11                    1025
@@ -743,6 +749,12 @@
 #define IDC_CT_OCTAVES_SPIN             1262
 #define IDC_GLOBAL_PRETENDER            1263
 #define IDC_BCG_PICTURE_SIZE            1264
+#define IDC_BR_VS_TEXT                  1264
+#define IDC_BR_GS_TEXT                  1265
+#define IDC_BR_FS_TEXT                  1266
+#define IDC_MD_VS_TEXT                  1267
+#define IDC_MD_GS_TEXT                  1268
+#define IDC_MD_FS_TEXT                  1269
 #define IDC_FBM_PREVIEW_FRAME           1284
 #define IDC_IS_LIGHT_BEAM_PASSABLLE     11048
 #define IDC_NO_SHADOW                   11049
@@ -1315,9 +1327,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        256
+#define _APS_NEXT_RESOURCE_VALUE        257
 #define _APS_NEXT_COMMAND_VALUE         33391
-#define _APS_NEXT_CONTROL_VALUE         1264
+#define _APS_NEXT_CONTROL_VALUE         1267
 #define _APS_NEXT_SYMED_VALUE           111
 #endif
 #endif

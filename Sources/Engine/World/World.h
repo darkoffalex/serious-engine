@@ -194,19 +194,6 @@ public:
   SGfxShaderInfo wo_sBrushShaderInfo;
   SGfxShaderInfo wo_sModelShaderInfo;
 
-  /*
-  BOOL wo_bShaderLoaded; // Shader program instance created & loaded
-  BOOL wo_bShaderLoadAttempted; // Shader loading tried once
-
-  CTFileName wo_fnmShaderVsFileName; // Vertex shader source path
-  CTFileName wo_fnmShaderGsFileName; // Geometry shader source path
-  CTFileName wo_fnmShaderFsFileName; // Fragment shader source path
-
-  CGfxShader* wo_pShader; // Shader wrapper pointer
-  CGfxUniformBuffer* wo_pShaderUboLights; // Shader light sources UBO buffer
-  SWorldShaderUniforms wo_sShaderUniformIds; // Shader uniform IDs (retrieved at loading)
-  */
-
   /* Initialize collision grid. */
   void InitCollisionGrid(void);
   /* Destroy collision grid. */

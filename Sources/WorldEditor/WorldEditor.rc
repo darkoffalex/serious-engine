@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// Английский (США) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -1510,9 +1510,9 @@ BEGIN
     PUSHBUTTON      "&Deselect all",ID_DESELECT_ALL,202,27,50,14
 END
 
-IDD_WORLD_SETTINGS DIALOG 0, 0, 343, 312
+IDD_WORLD_SETTINGS DIALOGEX 0, 0, 343, 456
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     LTEXT           "Background color:",IDC_STATIC,14,15,66,8
     CONTROL         "",IDC_BACKGROUND_COLOR,"Button",BS_OWNERDRAW | WS_TABSTOP,84,8,58,15
@@ -1601,8 +1601,28 @@ BEGIN
     LTEXT           "6",IDC_GAME_MODE_6_T2,272,211,8,8
     CTEXT           "Edit mission description",IDC_STATIC,7,239,329,8
     EDITTEXT        IDC_MISSION_DESCRIPTION,7,251,329,36,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL
-    DEFPUSHBUTTON   "OK",ID_APPLY,231,291,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,287,291,50,14
+    DEFPUSHBUTTON   "OK",ID_APPLY,231,435,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,287,435,50,14
+    LTEXT           "Brush shaders (GLSL)",IDC_STATIC,14,300,70,8
+    PUSHBUTTON      "...",IDC_BROWSE_BR_VS,308,313,28,11
+    LTEXT           "Vertex",IDC_STATIC,14,316,21,8
+    LTEXT           "...",IDC_BR_VS_TEXT,84,316,217,8
+    LTEXT           "Geometry",IDC_STATIC,14,333,31,8
+    LTEXT           "...",IDC_BR_GS_TEXT,84,333,214,8
+    PUSHBUTTON      "...",IDC_BROWSE_BR_GS,308,331,28,10
+    LTEXT           "Fragment",IDC_STATIC,14,348,30,8
+    PUSHBUTTON      "...",IDC_BROWSE_BR_FS,308,347,28,10
+    LTEXT           "...",IDC_BR_FS_TEXT,84,347,217,8
+    LTEXT           "Model shaders (GLSL)",IDC_STATIC,14,365,71,8
+    PUSHBUTTON      "...",IDC_BROWSE_MD_VS,308,378,28,11
+    LTEXT           "Vertex",IDC_STATIC,14,381,21,8
+    LTEXT           "...",IDC_MD_VS_TEXT,84,381,224,8
+    LTEXT           "Geometry",IDC_STATIC,14,398,31,8
+    LTEXT           "...",IDC_MD_GS_TEXT,84,398,224,8
+    PUSHBUTTON      "...",IDC_BROWSE_MD_GS,308,396,28,10
+    LTEXT           "Fragment",IDC_STATIC,14,413,30,8
+    PUSHBUTTON      "...",IDC_BROWSE_MD_FS,308,412,28,10
+    LTEXT           "...",IDC_MD_FS_TEXT,84,412,224,8
 END
 
 IDD_PG_RENDERING_STATISTICS DIALOG 0, 0, 186, 82
@@ -2471,12 +2491,18 @@ BEGIN
         VERTGUIDE, 284
         VERTGUIDE, 308
         TOPMARGIN, 7
-        BOTTOMMARGIN, 305
+        BOTTOMMARGIN, 449
         HORZGUIDE, 17
         HORZGUIDE, 28
         HORZGUIDE, 51
         HORZGUIDE, 208
         HORZGUIDE, 227
+        HORZGUIDE, 313
+        HORZGUIDE, 324
+        HORZGUIDE, 331
+        HORZGUIDE, 341
+        HORZGUIDE, 347
+        HORZGUIDE, 356
     END
 
     IDD_PG_RENDERING_STATISTICS, DIALOG
@@ -2867,6 +2893,11 @@ IDC_TE_TILE_PAINTING    CURSOR                  "res\\te_pick1.cur"
 //
 
 IDD_PG_TEXTURE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_WORLD_SETTINGS AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
@@ -3671,7 +3702,7 @@ BEGIN
     ID_TERRAIN_PROPERTIES   "Invoke terrain properties (Ctrl+Shift+T)\nInvoke terrain properties (Ctrl+Shift+T)"
 END
 
-#endif    // English (U.S.) resources
+#endif    // Английский (США) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

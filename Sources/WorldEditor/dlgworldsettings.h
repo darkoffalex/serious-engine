@@ -51,6 +51,13 @@ public:
 	float	m_fTopViewWidth;
 	CString	m_strBackdropObject;
 	CString	m_strLevelName;
+
+	CString m_fnBrushVsFile;
+	CString m_fnBrushGsFile;
+	CString m_fnBrushFsFile;
+	CString m_fnModelVsFile;
+	CString m_fnModelGsFile;
+	CString m_fnModelFsFile;
 	//}}AFX_DATA
 
 
@@ -68,6 +75,12 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CDlgWorldSettings)
 	afx_msg void OnBrowseBackgroundPicture();
+	afx_msg void OnBnClickedBrowseBrVs();
+	afx_msg void OnBnClickedBrowseBrGs();
+	afx_msg void OnBnClickedBrowseBrFs();
+	afx_msg void OnBnClickedBrowseMdVs();
+	afx_msg void OnBnClickedBrowseMdGs();
+	afx_msg void OnBnClickedBrowseMdFs();
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBrowseFrontViewPicture();
 	afx_msg void OnBrowseRightViewPicture();
