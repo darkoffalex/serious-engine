@@ -16,6 +16,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/GfxShader.h>
 #include <Engine/Graphics/GfxUniformBuffer.h>
 
+// to distinguish various types of entities while rendering
+#include <EntitiesMP/Common/Flags.h>
+
 extern INDEX mdl_iShadowQuality;
 // model shadow precision
 // 0 = no shadows
@@ -464,7 +467,8 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
   if (pWorld->wo_sModelShaderInfo.gsi_bLoaded)
   {
       // Bind light-sources UBO
-      gfxBindBuffer(GL_UNIFORM_BUFFER, pWorld->wo_sModelShaderInfo.gsi_pShaderUboLights->Id());
+      UINT iUboId = pWorld->wo_sModelShaderInfo.gsi_pShaderUboLights->Id();
+      gfxBindBuffer(GL_UNIFORM_BUFFER, iUboId);
 
       // find the lights & check for full bright
       BOOL bFullBright = FALSE;
@@ -537,9 +541,8 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
           iLightCount++;
       }
 
-      // Rebind active UBO to binding 1
-      gfxBindBufferBase(GL_UNIFORM_BUFFER, 1, pWorld->wo_sBrushShaderInfo.gsi_pShaderUboLights->Id());
-      gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
+      // Rebind active UBO to binding 0 of model shader
+      gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, iUboId);
 
       // pass light count & shading status to shader
       auto& uniformIds = pWorld->wo_sModelShaderInfo.gsi_sModelUniforms;
@@ -858,8 +861,11 @@ void CRenderer::RenderModels( BOOL bBackground)
       bool bShaderUsed = false;
       auto* pWorld = dm.dm_penModel->GetWorld();
 
+      // don't use sahder for specific entities
+      BOOL bShaderIgnored = en.GetCollisionFlags() & ECF_ITEM;
+
       // use shader program if loaded
-      if (pWorld->wo_sModelShaderInfo.gsi_bLoaded)
+      if (pWorld->wo_sModelShaderInfo.gsi_bLoaded && !bShaderIgnored)
       {
           gfxUseProgram(pWorld->wo_sModelShaderInfo.gsi_pShader->Id());
           bShaderUsed = true;
@@ -898,6 +904,7 @@ void CRenderer::RenderModels( BOOL bBackground)
       // disable shader (if used)
       if (bShaderUsed)
       {
+          gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
           gfxUseProgram(0);
       }
     }

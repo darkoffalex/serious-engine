@@ -55,7 +55,7 @@ uniform int materialUsage[4];
 // Light sources
 uniform int useLights;
 uniform int activeLights;
-layout (std140, binding = 1) uniform lighting
+layout (std140, binding = 0) uniform lighting
 {
     Light lights[MAX_LIGHT_SOURCES];
 };
@@ -100,6 +100,28 @@ vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDi
 
     // Result color (combine diffuse and specular)
     return light.color.rgb * (diffuse + specular) * attenuation;
+}
+
+vec3 calculateDirectional(vec3 fragPos, vec3 fragNormal, Light light, float specInstensity, float shininess)
+{
+    // Directional to light
+    vec3 lightDir = normalize(-light.direction.xyz);
+    // Calc diffusion
+    float diffuse = max(dot(fragNormal, lightDir), 0.0);
+
+    // Calc specular (Blinn-Phong)
+    float specular = 0.0;
+    if (specInstensity > 0.0 && diffuse > 0.0) { // Only compute specular if diffuse is non-zero
+        // View direction (in view space, camera at (0,0,0))
+        vec3 viewDir = normalize(-fragPos);
+        // Halfway vector
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        // Specular term
+        specular = pow(max(dot(fragNormal, halfwayDir), 0.0), shininess) * specInstensity;
+    }
+
+    // Result color
+    return light.color.rgb * (diffuse + specular) + light.colorAmbient.rgb;
 }
 
 void main() 
@@ -156,6 +178,12 @@ void main()
                 break;
 
                 case LT_DIRECTIONAL:
+                    lighting += calculateDirectional(
+                        fs_in.position,
+                        normal, 
+                        lights[i], 
+                        specIntensity, 
+                        shininess);
                 break;
             }
         }

@@ -1708,7 +1708,8 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
       bUsedShader = TRUE;
 
       // Bind light-sources UBO
-      gfxBindBuffer(GL_UNIFORM_BUFFER, pWorld->wo_sBrushShaderInfo.gsi_pShaderUboLights->Id());
+      UINT iUboId = pWorld->wo_sBrushShaderInfo.gsi_pShaderUboLights->Id();
+      gfxBindBuffer(GL_UNIFORM_BUFFER, iUboId);
 
       // MatriX & offset to transform coordinates
       const FLOATmatrix3D& mViewer = _ppr->pr_ViewerRotationMatrix;
@@ -1812,9 +1813,8 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
       gfxUniform1i(uniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
       gfxUniform1i(uniformIds.wsu_iActiveLights, iLightCount);
 
-      // Rebind active UBO to binding 0
-      gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, pWorld->wo_sBrushShaderInfo.gsi_pShaderUboLights->Id());
-      gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
+      // Rebind active UBO to binding 0 of brush shader
+      gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, iUboId);
   }
 
   // mapping for material layers (shader pipeline only)
@@ -2082,6 +2082,7 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
   // Disable shader if used
   if (bUsedShader)
   {
+      gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
       gfxUseProgram(0);
   }
 
