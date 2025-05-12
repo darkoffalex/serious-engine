@@ -157,9 +157,20 @@ struct ModelLight {
   FLOAT3D ml_vDirection;      // direction from light to the model position (normalized)
   FLOAT ml_fShadowIntensity;  // intensity at the model position (for shadow)
   FLOAT ml_fR, ml_fG, ml_fB;  // light components at light source (0..255)
+  FLOAT ml_fDistance;         // distance from light to the model position
   inline void Clear(void) {};
 };
+
+// comparator for distance-sorted multiset
+struct ModelLightDistanceCmp
+{
+    bool operator()(const ModelLight& a, const ModelLight& b) const {
+        return a.ml_fDistance < b.ml_fDistance;
+    }
+};
+
 static CDynamicStackArray<struct ModelLight> _amlLights;
+static std::multiset<ModelLight, ModelLightDistanceCmp> _amLightsMSet;
 
 static INDEX _ctMaxAddEdges=0;
 static INDEX _ctMaxActiveEdges=0;

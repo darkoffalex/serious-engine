@@ -1265,7 +1265,7 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
             case SGfxShaderInfo::SUT_MODELS:
             {
                 // Allocate uniform buffer
-                gsi_pShaderUboLights = new CGfxUniformBuffer(sizeof(SShaderLight) * MAX_MODEL_LIGHTS, 0, GL_STATIC_DRAW);
+                gsi_pShaderUboLights = new CGfxUniformBuffer(sizeof(SShaderLight) * MAX_MODEL_LIGHTS, 1, GL_STATIC_DRAW);
 
                 // Get uniform IDs
                 auto uniformIds = gsi_pShader->UniformIds({

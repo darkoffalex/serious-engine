@@ -320,6 +320,118 @@ BOOL CRenderer::FindModelLights( CEntity &en, const CPlacement3D &plModel,
   return TRUE;
 }
 
+void CRenderer::FindShaderModelLights(CEntity& en, const CPlacement3D& plModel, BOOL* pbFullBright)
+{
+    // find shading info if not already cached
+    if (en.en_psiShadingInfo != NULL && !(en.en_ulFlags & ENF_VALIDSHADINGINFO)) {
+        _pfRenderProfile.StartTimer(CRenderProfile::PTI_FINDSHADINGINFO);
+        _pfRenderProfile.IncrementTimerAveragingCounter(CRenderProfile::PTI_FINDSHADINGINFO, 1);
+        if (en.en_ulFlags & ENF_NOSHADINGINFO) {
+            en.en_psiShadingInfo = NULL;
+        }
+        else {
+            en.FindShadingInfo();
+        }
+        _pfRenderProfile.StopTimer(CRenderProfile::PTI_FINDSHADINGINFO);
+    }
+
+    _pfRenderProfile.StartTimer(CRenderProfile::PTI_FINDLIGHTS);
+
+    // clear list of active lights
+    _amLightsMSet.clear();
+
+    // if there is no valid shading info
+    if (en.en_psiShadingInfo == NULL)
+    {
+        _pfRenderProfile.StopTimer(CRenderProfile::PTI_FINDLIGHTS);
+        return;
+    }
+
+    // if model is above terrain
+    if (en.en_psiShadingInfo->si_ptrTerrain != NULL) 
+    {
+        CTerrain* ptrTerrain = en.en_psiShadingInfo->si_ptrTerrain;
+        // if full bright rendering
+        if (_wrpWorldRenderPrefs.wrp_shtShadows == CWorldRenderPrefs::SHT_NONE) 
+        {
+            *pbFullBright = TRUE;
+            _pfRenderProfile.StopTimer(CRenderProfile::PTI_FINDLIGHTS);
+            return;
+        }
+    }
+    // else if model is above polygon
+    else if (en.en_psiShadingInfo->si_pbpoPolygon != NULL) 
+    {
+        // if full bright rendering
+        if (_wrpWorldRenderPrefs.wrp_shtShadows == CWorldRenderPrefs::SHT_NONE) 
+        {
+            *pbFullBright = TRUE;
+            _pfRenderProfile.StopTimer(CRenderProfile::PTI_FINDLIGHTS);
+            return;
+        }
+
+        // if full bright polygon
+        if (en.en_psiShadingInfo->si_pbpoPolygon->bpo_ulFlags & BPOF_FULLBRIGHT) {
+            *pbFullBright = TRUE;
+            _pfRenderProfile.StopTimer(CRenderProfile::PTI_FINDLIGHTS);
+            return;
+        }
+
+        // get the shadow map of the underlying polygon
+        CBrushShadowMap& bsm = en.en_psiShadingInfo->si_pbpoPolygon->bpo_smShadowMap;
+
+        // added lights
+        INT iLightCount = 0;
+
+        // for each shadow layer
+        FOREACHINLIST(CBrushShadowLayer, bsl_lnInShadowMap, bsm.bsm_lhLayers, itbsl)
+        {
+            // get the light source
+            CLightSource* plsLight = itbsl->bsl_plsLightSource;
+
+            // skip lens flares
+            if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
+                continue;
+
+            // skip dark lights
+            if (plsLight->ls_ulFlags & LSF_DARKLIGHT)
+                continue;
+
+            // light position
+            const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
+            const FLOAT3D& vLight = plLight.pl_PositionVector;
+
+            // for directionals - always add as closest
+            if (plsLight->ls_ulFlags & LSF_DIRECTIONAL) 
+            {
+                ModelLight ml{};
+                ml.ml_plsLight = plsLight;
+                ml.ml_fDistance = 0.0f;
+                _amLightsMSet.emplace(ml);
+                iLightCount++;
+            }
+            // for other lights - will be sort by distance
+            else
+            {
+                FLOAT3D vDirection = plModel.pl_PositionVector - vLight;
+                FLOAT fDistance = vDirection.Length();
+
+                ModelLight ml{};
+                ml.ml_plsLight = plsLight;
+                ml.ml_fDistance = fDistance;
+                _amLightsMSet.emplace(ml);
+                iLightCount++;
+            }
+
+            // if max count reashed - stop
+            if (iLightCount > MAX_MODEL_LIGHTS_PREP) {
+                break;
+            }
+        }
+    }
+
+    _pfRenderProfile.StopTimer(CRenderProfile::PTI_FINDLIGHTS);
+}
 
 /*
  * Render one model with shadow (eventually)
@@ -346,21 +458,21 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
 
   BOOL bRenderModelShadow = FALSE;
   FLOAT fTotalShadowIntensity = 0.0f;
-  // if not rendering cluster shadows
-  if( !re_bRenderingShadows) {
-    // find model lights
-    bRenderModelShadow = FindModelLights( en, plModel, colLight, colAmbient,
-                                          fTotalShadowIntensity, vTotalLightDirection, plFloorPlane);
-  }
 
   // if using shader
   auto* pWorld = en.GetWorld();
   if (pWorld->wo_sModelShaderInfo.gsi_bLoaded)
   {
+      // Bind light-sources UBO
+      gfxBindBuffer(GL_UNIFORM_BUFFER, pWorld->wo_sModelShaderInfo.gsi_pShaderUboLights->Id());
+
+      // find the lights & check for full bright
+      BOOL bFullBright = FALSE;
+      FindShaderModelLights(en, plModel, &bFullBright);
+
       // should shade non-full-bright, non-editor models
-      BOOL bShadows = _wrpWorldRenderPrefs.wrp_shtShadows != CWorldRenderPrefs::ShadowsType::SHT_NONE;
-      BOOL bFullBright = FALSE; // TODO: Get full bright status from underlying polygon
-      BOOL bCalcLighting = bShadows && !bFullBright && en.en_RenderType != CEntity::RT_EDITORMODEL;
+      bRenderModelShadow = _wrpWorldRenderPrefs.wrp_shtShadows != CWorldRenderPrefs::ShadowsType::SHT_NONE;
+      BOOL bCalcLighting = bRenderModelShadow && !bFullBright && en.en_RenderType != CEntity::RT_EDITORMODEL;
 
       // MatriX & offset to transform coordinates (hm, may be need handle background models projection cases?)
       const FLOATmatrix3D& mViewer = re_prProjection->pr_ViewerRotationMatrix;
@@ -369,20 +481,11 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
       // light-sources affecting model
       INT iLightCount = 0;
 
-      // for each active light
-      for (INDEX iLight = 0; iLight < _amlLights.Count(); iLight++) 
+      // for each active light (from nearest to far)
+      for (auto& ml : _amLightsMSet)
       {
           // Light-source pointer
-          struct ModelLight& ml = _amlLights[iLight];
           CLightSource* plsLight = ml.ml_plsLight;
-
-          // Skip lens flares
-          if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
-              continue;
-
-          // Skip dark lights
-          if (plsLight->ls_ulFlags & LSF_DARKLIGHT)
-              continue;
 
           // If reached max light count - break the cycle
           if (iLightCount >= MAX_MODEL_LIGHTS)
@@ -427,14 +530,31 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
           sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
           sLightData.wsl_uType = (UINT)eType;
 
+          // Update UBO
+          gfxBufferSubData(GL_UNIFORM_BUFFER, sizeof(SShaderLight) * iLightCount, sizeof(SShaderLight), &sLightData);
+
           // Count increases
           iLightCount++;
       }
+
+      // Rebind active UBO to binding 1
+      gfxBindBufferBase(GL_UNIFORM_BUFFER, 1, pWorld->wo_sBrushShaderInfo.gsi_pShaderUboLights->Id());
+      gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
 
       // pass light count & shading status to shader
       auto& uniformIds = pWorld->wo_sModelShaderInfo.gsi_sModelUniforms;
       gfxUniform1i(uniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
       gfxUniform1i(uniformIds.wsu_iActiveLights, iLightCount);
+  }
+  // fixed (non-shader) pipeline
+  else
+  {
+      // if not rendering cluster shadows
+      if (!re_bRenderingShadows) 
+      {
+          // find model lights
+          bRenderModelShadow = FindModelLights(en, plModel, colLight, colAmbient, fTotalShadowIntensity, vTotalLightDirection, plFloorPlane);
+      }
   }
 
 

@@ -150,6 +150,8 @@ typedef ULONG   COLOR;  // color is always in 32 bit true-color format
 #define MAX_BRUSH_LIGHTS 32
 // max lights per rendered model (for shader purposes only)
 #define MAX_MODEL_LIGHTS 8
+// max lights prepared in sorted multiset for one model
+#define MAX_MODEL_LIGHTS_PREP 16
 
 // z-buffer depth constants
 #define ZBUF_FRONT  (0.0f)

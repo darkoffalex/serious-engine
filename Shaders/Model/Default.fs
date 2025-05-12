@@ -55,7 +55,7 @@ uniform int materialUsage[4];
 // Light sources
 uniform int useLights;
 uniform int activeLights;
-layout (std140, binding = 0) uniform lighting
+layout (std140, binding = 1) uniform lighting
 {
     Light lights[MAX_LIGHT_SOURCES];
 };
