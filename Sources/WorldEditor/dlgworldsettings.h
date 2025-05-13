@@ -81,6 +81,8 @@ protected:
 	afx_msg void OnBnClickedBrowseMdVs();
 	afx_msg void OnBnClickedBrowseMdGs();
 	afx_msg void OnBnClickedBrowseMdFs();
+	afx_msg void OnBnClickedButtonBsReset();
+	afx_msg void OnBnClickedButtonMsReset();
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBrowseFrontViewPicture();
 	afx_msg void OnBrowseRightViewPicture();

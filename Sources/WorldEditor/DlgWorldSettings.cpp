@@ -187,12 +187,13 @@ void CDlgWorldSettings::DoDataExchange(CDataExchange* pDX)
 	  pDoc->m_woWorld.wo_fRtCZ = m_fRightViewCenterX;
 	  pDoc->m_woWorld.wo_fRtCY = m_fRightViewCenterY;
 
-      // shader files
+      // brush shaders
       pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmVsSource = CStringA(m_fnBrushVsFile);
       pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmGsSource = CStringA(m_fnBrushGsFile);
       pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmFsSource = CStringA(m_fnBrushFsFile);
       pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_bLoadAttempted = FALSE;
 
+      // model shaders
       pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmVsSource = CStringA(m_fnModelVsFile);
       pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmGsSource = CStringA(m_fnModelGsFile);
       pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmFsSource = CStringA(m_fnModelFsFile);
@@ -273,6 +274,8 @@ BEGIN_MESSAGE_MAP(CDlgWorldSettings, CDialog)
 	ON_BN_CLICKED(IDC_BROWSE_BACKDROP_OBJECT, OnBrowseBackdropObject)
 	ON_BN_CLICKED(ID_APPLY, OnApply)
 	//}}AFX_MSG_MAP
+    ON_BN_CLICKED(IDC_BUTTON_BS_RESET, &CDlgWorldSettings::OnBnClickedButtonBsReset)
+    ON_BN_CLICKED(IDC_BUTTON_MS_RESET, &CDlgWorldSettings::OnBnClickedButtonMsReset)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -498,6 +501,34 @@ void CDlgWorldSettings::OnBnClickedBrowseMdFs()
     m_fnModelFsFile = path;
     CWorldEditorDoc* pDoc = theApp.GetDocument();
     pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmFsSource = CTString(CStringA(m_fnModelFsFile));
+
+    UpdateData(FALSE);
+}
+
+void CDlgWorldSettings::OnBnClickedButtonBsReset()
+{
+    m_fnBrushVsFile = "";
+    m_fnBrushGsFile = "";
+    m_fnBrushFsFile = "";
+
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmVsSource = CTString("");
+    pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmGsSource = CTString("");
+    pDoc->m_woWorld.wo_sBrushShaderInfo.gsi_fnmFsSource = CTString("");
+
+    UpdateData(FALSE);
+}
+
+void CDlgWorldSettings::OnBnClickedButtonMsReset()
+{
+    m_fnModelVsFile = "";
+    m_fnModelGsFile = "";
+    m_fnModelFsFile = "";
+
+    CWorldEditorDoc* pDoc = theApp.GetDocument();
+    pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmVsSource = CTString("");
+    pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmGsSource = CTString("");
+    pDoc->m_woWorld.wo_sModelShaderInfo.gsi_fnmFsSource = CTString("");
 
     UpdateData(FALSE);
 }

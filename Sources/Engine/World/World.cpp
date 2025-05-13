@@ -1193,8 +1193,18 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
 
     // Exit if some file paths missing
     if (gsi_fnmVsSource.Length() == 0 || gsi_fnmGsSource.Length() == 0 || gsi_fnmFsSource.Length() == 0)
-        return;
+    {
+        // Unload if already loaded
+        if (gsi_bLoaded == TRUE)
+        {
+            gsi_bLoaded = FALSE;
+            Unload(); // May throw?
+        }
 
+        return;
+    }
+    
+    // If file paths set
     try
     {
         // Unload if already loaded

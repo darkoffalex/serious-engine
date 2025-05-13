@@ -231,12 +231,14 @@
 #define IDC_BROWSE_MD_FS                1023
 #define IDC_BUTTON10                    1024
 #define IDC_CLOSED                      1024
+#define IDC_BUTTON_BS_RESET             1024
 #define IDC_BUTTON11                    1025
 #define IDC_APPLY                       1025
 #define IDC_STRETCH                     1025
 #define IDC_STRETCH_X                   1025
 #define IDC_EDIT4                       1025
 #define IDC_STRETCH_U                   1025
+#define IDC_BUTTON_MS_RESET             1025
 #define IDC_BUTTON12                    1026
 #define IDC_RENDERING_PREFS01           1026
 #define IDC_STRETCH_Y                   1026
