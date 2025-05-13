@@ -1,0 +1,26 @@
+;******* Creation settings
+TEXTURE_DIM 2.0 2.0
+SIZE 1.0
+MAX_SHADOW 0
+HI_QUALITY YES
+FLAT NO
+HALF_FLAT NO
+STRETCH_DETAIL NO
+
+;******* Mip models
+DIRECTORY ModelsSH\utility_box_02_1k\
+MIP_MODELS 1
+    utility_box_02_1k_GR.obj
+
+ANIM_START
+;******* Start of animation block
+
+DIRECTORY ModelsSH\utility_box_02_1k\
+ANIMATION Default
+SPEED 0.1
+    utility_box_02_1k_GR.obj
+
+;******* End of animation block
+ANIM_END
+
+END
