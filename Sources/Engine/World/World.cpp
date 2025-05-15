@@ -103,10 +103,12 @@ CWorld::CWorld(void)
   wo_sBrushShaderInfo.gsi_fnmVsSource = CTFileName(CTString(""));
   wo_sBrushShaderInfo.gsi_fnmGsSource = CTFileName(CTString(""));
   wo_sBrushShaderInfo.gsi_fnmFsSource = CTFileName(CTString(""));
+  wo_sBrushShaderInfo.gsi_pWorld = this;
 
   wo_sModelShaderInfo.gsi_fnmVsSource = CTFileName(CTString(""));
   wo_sModelShaderInfo.gsi_fnmGsSource = CTFileName(CTString(""));
   wo_sModelShaderInfo.gsi_fnmFsSource = CTFileName(CTString(""));
+  wo_sModelShaderInfo.gsi_pWorld = this;
 
   // create empty texture movements
   wo_attTextureTransformations.New(256);
@@ -1199,6 +1201,14 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
         {
             gsi_bLoaded = FALSE;
             Unload(); // May throw?
+
+            // Recalculate all shadows after unload
+            if (gsi_pWorld)
+            {
+                gsi_pWorld->DiscardAllShadows();
+                gsi_pWorld->CalculateNonDirectionalShadows();
+                gsi_pWorld->CalculateDirectionalShadows();
+            }
         }
 
         return;
@@ -1319,9 +1329,18 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
 
         // Mark as loaded
         gsi_bLoaded = TRUE;
+
+        // Recalculate all shadows after load (everytime?)
+        if (gsi_pWorld)
+        {
+            gsi_pWorld->DiscardAllShadows();
+            gsi_pWorld->CalculateNonDirectionalShadows();
+            gsi_pWorld->CalculateDirectionalShadows();
+        }
     }
     catch (std::exception& ex)
     {
+        // Crash on fail? May be just show error and let continue?
         FatalError("%s", ex.what());
     }
 }

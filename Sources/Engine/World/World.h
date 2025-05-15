@@ -133,6 +133,9 @@ struct SGfxShaderInfo
     CGfxShader* gsi_pShader = nullptr;
     CGfxUniformBuffer* gsi_pShaderUboLights = nullptr;
 
+    // Owner world object
+    CWorld* gsi_pWorld = nullptr;
+
     // Uniform locations
     SBrushShaderUniforms gsi_sBrushUniforms;
     SModelShaderUniforms gsi_sModelUniforms;
