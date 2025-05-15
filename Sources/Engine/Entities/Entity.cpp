@@ -380,6 +380,17 @@ BOOL CEntity::AdjustShadingParameters(FLOAT3D &vLightDirection,
 {
   return TRUE;
 }
+void CEntity::GetEmissionParameters(COLOR& colEmission, FLOAT& fPower)
+{
+    colEmission = C_BLACK;
+    fPower = 0.0f;
+}
+
+FLOAT CEntity::GetHeightMapScale()
+{
+    return 1.0f;
+}
+
 /* Adjust model mip factor if needed. */
 void CEntity::AdjustMipFactor(FLOAT &fMipFactor)
 {

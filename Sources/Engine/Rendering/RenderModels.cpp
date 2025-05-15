@@ -548,6 +548,17 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
       auto& uniformIds = pWorld->wo_sModelShaderInfo.gsi_sModelUniforms;
       gfxUniform1i(uniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
       gfxUniform1i(uniformIds.wsu_iActiveLights, iLightCount);
+
+      // Get emission parameters
+      COLOR colEmission;
+      FLOAT fEmissionPower;
+      en.GetEmissionParameters(colEmission, fEmissionPower);
+
+      UBYTE ubColEmission[3] = { 0, 0, 0 };
+      ColorToRGB(colEmission, ubColEmission[0], ubColEmission[1], ubColEmission[2]);
+      FLOAT3D fColEmission = FLOAT3D((FLOAT)ubColEmission[0] / 255.0f, (FLOAT)ubColEmission[1] / 255.0f, (FLOAT)ubColEmission[2] / 255.0f);
+      gfxUniform3fv(uniformIds.wsu_iEmissionColor, 1, &fColEmission(1));
+      gfxUniform1fv(uniformIds.wsu_iEmissionPower, 1, &fEmissionPower);
   }
   // fixed (non-shader) pipeline
   else

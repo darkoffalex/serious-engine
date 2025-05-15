@@ -62,6 +62,9 @@ uniform int materialUsage[3];
 uniform int activeLayers;
 uniform int useShadow;
 
+// Displacement info
+uniform float heightScale;
+
 // Light sources
 uniform int useLights;
 uniform int activeLights;

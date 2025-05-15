@@ -1257,7 +1257,8 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
                     "useShadow",     // 9
                     "materialUsage", // 10
                     "activeLights",  // 11
-                    "useLights"      // 12
+                    "useLights",     // 12
+                    "heightScale"    // 13
                 });
 
                 // Map uniform ids to structure
@@ -1274,6 +1275,7 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
                 gsi_sBrushUniforms.wsu_iMaterialUsage = uniformIds[10];
                 gsi_sBrushUniforms.wsu_iActiveLights = uniformIds[11];
                 gsi_sBrushUniforms.wsu_iUseLights = uniformIds[12];
+                gsi_sBrushUniforms.wsu_iHeightScale = uniformIds[13];
                 break;
             }
 
@@ -1288,9 +1290,13 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
                     "texSpec",       // 1
                     "texNormal",     // 2
                     "texHeight",     // 3
-                    "materialUsage", // 4
-                    "activeLights",  // 5
-                    "useLights"      // 6
+                    "texEmission",   // 4
+                    "materialUsage", // 5
+                    "activeLights",  // 6
+                    "useLights",     // 7
+                    "emissionColor", // 8
+                    "emissionPower", // 9
+                    "heightScale"    // 10
                 });
 
                 // Map uniform ids to structure
@@ -1298,9 +1304,13 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
                 gsi_sModelUniforms.wsu_iTexSpec = uniformIds[1];
                 gsi_sModelUniforms.wsu_iTexNormal = uniformIds[2];
                 gsi_sModelUniforms.wsu_iTexHeight = uniformIds[3];
-                gsi_sModelUniforms.wsu_iMaterialUsage = uniformIds[4];
-                gsi_sModelUniforms.wsu_iActiveLights = uniformIds[5];
-                gsi_sModelUniforms.wsu_iUseLights = uniformIds[6];
+                gsi_sModelUniforms.wsu_iTexEmission = uniformIds[4];
+                gsi_sModelUniforms.wsu_iMaterialUsage = uniformIds[5];
+                gsi_sModelUniforms.wsu_iActiveLights = uniformIds[6];
+                gsi_sModelUniforms.wsu_iUseLights = uniformIds[7];
+                gsi_sModelUniforms.wsu_iEmissionColor = uniformIds[8];
+                gsi_sModelUniforms.wsu_iEmissionPower = uniformIds[9];
+                gsi_sModelUniforms.wsu_iHeightScale = uniformIds[10];
                 break;
             }
             default:

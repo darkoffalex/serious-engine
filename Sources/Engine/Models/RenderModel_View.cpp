@@ -34,10 +34,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Models/RenderModel_internal.h>
 
-#define TEX_UNIT_MDL_COLOR  0
-#define TEX_UNIT_MDL_SPEC   1
-#define TEX_UNIT_MDL_NORM   2
-//#define TEX_UNIT_MDL_REFL   3
+#define TEX_UNIT_MDL_COLOR      0
+#define TEX_UNIT_MDL_SPEC       1
+#define TEX_UNIT_MDL_NORM       2
+#define TEX_UNIT_MDL_REFL       3
+#define TEX_UNIT_MDL_HEIGHT     4
+#define TEX_UNIT_MDL_EMISSION   5
 
 // asm shortcuts
 #define O offset
@@ -3144,6 +3146,8 @@ void CModelObject::RenderShaderModel_View(CRenderModel& rm, const SGfxShaderInfo
     CTextureData* ptdNormal = (CTextureData*)mo_toBump.GetData();
     CTextureData* ptdSpec = (CTextureData*)mo_toSpecular.GetData();
     CTextureData* ptdReflect = (CTextureData*)mo_toReflection.GetData();
+    CTextureData* ptdHeight = (CTextureData*)mo_toHeight.GetData();
+    CTextureData* ptdEmission = (CTextureData*)mo_toEmission.GetData();
 
     // get UV texture corrections
     if (ptdDiff != NULL) {
@@ -3210,7 +3214,7 @@ void CModelObject::RenderShaderModel_View(CRenderModel& rm, const SGfxShaderInfo
     _pfModelProfile.IncrementTimerAveragingCounter(CModelProfile::PTI_VIEW_RENDER_DIFFUSE);
 
     // texture usage
-    INT32 iaMaterialUsage[4] = { 0, 0, 0, 0 };
+    INT32 iaMaterialUsage[6] = { 0, 0, 0, 0, 0, 0 };
 
     // has color (base) texture
     if (ptdDiff != NULL)
@@ -3254,8 +3258,30 @@ void CModelObject::RenderShaderModel_View(CRenderModel& rm, const SGfxShaderInfo
         iaMaterialUsage[2] = (INT32)TRUE;
     }
 
+    if (ptdHeight != NULL)
+    {
+        // TODO: Handle
+    }
+
+    if (ptdReflect != NULL)
+    {
+        // TODO: Handle
+    }
+
+    if (ptdEmission != NULL)
+    {
+        gfxSetTextureUnit(TEX_UNIT_MDL_EMISSION);
+        gfxEnableTexture();
+        gfxSetTextureWrapping(GFX_REPEAT, GFX_REPEAT);
+
+        INDEX iFrame = 0;
+        SetCurrentTexture(ptdEmission, iFrame);
+        gfxUniform1i(sShaderInfo.gsi_sModelUniforms.wsu_iTexEmission, TEX_UNIT_MDL_EMISSION);
+        iaMaterialUsage[5] = (INT32)TRUE;
+    }
+
     // texture usage inforamtion
-    gfxUniform1iv(sShaderInfo.gsi_sModelUniforms.wsu_iMaterialUsage, 4, iaMaterialUsage);
+    gfxUniform1iv(sShaderInfo.gsi_sModelUniforms.wsu_iMaterialUsage, 6, iaMaterialUsage);
 
     // disable blending
     gfxDisableBlend();
@@ -3270,6 +3296,12 @@ void CModelObject::RenderShaderModel_View(CRenderModel& rm, const SGfxShaderInfo
     gfxSetTextureUnit(TEX_UNIT_MDL_SPEC);
     gfxDisableTexture();
     gfxSetTextureUnit(TEX_UNIT_MDL_NORM);
+    gfxDisableTexture();
+    //gfxSetTextureUnit(TEX_UNIT_MDL_REFL);
+    //gfxDisableTexture();
+    //gfxSetTextureUnit(TEX_UNIT_MDL_HEIGHT);
+    //gfxDisableTexture();
+    gfxSetTextureUnit(TEX_UNIT_MDL_EMISSION);
     gfxDisableTexture();
     gfxSetTextureUnit(0);
 

@@ -68,6 +68,7 @@ struct SBrushShaderUniforms
     INT32 wsu_iMaterialUsage;
     INT32 wsu_iActiveLights;
     INT32 wsu_iUseLights;
+    INT32 wsu_iHeightScale;
 };
 
 // Shader uniform IDs for models
@@ -78,9 +79,13 @@ struct SModelShaderUniforms
     INT32 wsu_iTexNormal;
     INT32 wsu_iTexHeight;
     INT32 wsu_iTexReflection;
+    INT32 wsu_iTexEmission;
     INT32 wsu_iMaterialUsage;
     INT32 wsu_iActiveLights;
     INT32 wsu_iUseLights;
+    INT32 wsu_iEmissionColor;
+    INT32 wsu_iEmissionPower;
+    INT32 wsu_iHeightScale;
 };
 
 // Light-source shader UBO entry

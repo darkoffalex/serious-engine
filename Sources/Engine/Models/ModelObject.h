@@ -53,6 +53,8 @@ public:
   CTextureObject mo_toReflection;				   	  		// texture used for reflection
   CTextureObject mo_toSpecular;				   					// texture used for specularity
   CTextureObject mo_toBump;   				   					// texture used for bump
+  CTextureObject mo_toHeight;                                   // texture used for displacement (POM)
+  CTextureObject mo_toEmission;                                 // texture used for emission surfaces
   FLOAT3D mo_Stretch;															// dynamic stretching vector, (usually 1,1,1)
   ULONG mo_ColorMask;															// mask telling what parts (colors) are visible
   INDEX mo_iLastRenderMipLevel;                   // last rendered mip model index remembered

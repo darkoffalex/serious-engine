@@ -597,6 +597,10 @@ public:
   /* Adjust model shading parameters if needed - return TRUE if needs model shadows. */
   virtual BOOL AdjustShadingParameters(FLOAT3D &vLightDirection,
     COLOR &colLight, COLOR &colAmbient);
+  /* Get entity's model emission parameters (shader pipeline only) */
+  virtual void GetEmissionParameters(COLOR& colEmission, FLOAT& fPower);
+  /* Get entity's model height scale (shader pipeline only) */
+  virtual FLOAT GetHeightMapScale();
   /* Adjust model mip factor if needed. */
   virtual void AdjustMipFactor(FLOAT &fMipFactor);
   // get a different model object for rendering - so entity can change its appearance dynamically

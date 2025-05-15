@@ -14,6 +14,8 @@
 #define MTL_SPECULAR        1
 #define MTL_NORMAL          2
 #define MTL_HEIGHT          3
+#define MTL_REFLECTION      4
+#define MTL_EMISSION        5
 
 // Height map constants
 // TODO: Maybe need uniform variable for it (can depend on texture & mapping)
@@ -48,9 +50,17 @@ uniform sampler2D texColor;
 uniform sampler2D texSpec;
 uniform sampler2D texNormal;
 uniform sampler2D texHeight;
+uniform sampler2D texEmission;
 
-// Texture settings (usage of color, scpe, normal, height)
-uniform int materialUsage[4];
+// Texture settings (usage of color, scpe, normal, height, reflection, emission)
+uniform int materialUsage[6];
+
+// Emission info
+uniform vec3 emissionColor;
+uniform float emissionPower;
+
+// Displacement info
+uniform float heightScale;
 
 // Light sources
 uniform int useLights;
@@ -131,6 +141,18 @@ void main()
     if(bool(materialUsage[MTL_COLOR]))
     {
         albedo = texture2D(texColor, fs_in.uv).rgba;
+    }
+
+    // If using emission texture
+    if(bool(materialUsage[MTL_EMISSION]))
+    {
+        float mask = texture2D(texEmission, fs_in.uv).r;
+        if(mask > 0)
+        {
+            vec3 emission = emissionColor * emissionPower * albedo.rgb;
+            fragColor = vec4(emission, albedo.a);
+            return;
+        }
     }
 
     // Calculate lighting if needed

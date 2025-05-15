@@ -50,6 +50,8 @@ properties:
  22 CTFileName m_fnReflection "Reflection" =CTString(""),
  23 CTFileName m_fnSpecular   "Specular" =CTString(""),
  24 CTFileName m_fnBump       "Bump" =CTString(""),
+101 CTFileName m_fnHeight     "Height map" = CTString(""),
+102 CTFileName m_fnEmission   "Emission map" = CTString(""),
   3 FLOAT m_fStretchAll       "StretchAll" 'S' = 1.0f,
   4 FLOAT m_fStretchX         "StretchX"   'X' = 1.0f,
   5 FLOAT m_fStretchY         "StretchY"   'Y' = 1.0f,
@@ -68,6 +70,7 @@ properties:
  15 ANGLE3D m_aShadingDirection "Light direction" 'D' = ANGLE3D( AngleDeg(45.0f),AngleDeg(45.0f),AngleDeg(45.0f)),
  16 COLOR m_colLight            "Light color" 'O' = C_WHITE,
  17 COLOR m_colAmbient          "Ambient color" 'A' = C_BLACK,
+103 COLOR m_colEmission         "Emission color" = C_WHITE,
  18 CTFileName m_fnmLightAnimation "Light animation file" = CTString(""),
  19 ANIMATION m_iLightAnimation "Light animation" = 0,
  20 CAnimObject m_aoLightAnimation,
@@ -108,6 +111,8 @@ properties:
  91 FLOAT m_fChainSawCutDamage    "Chain saw cut dammage" 'C' = 300.0f,
  93 INDEX m_iFirstRandomAnimation "First random animation" 'R' = -1,
 100 FLOAT m_fMaxTessellationLevel "Max tessellation level" = 0.0f,
+104 FLOAT m_fEmissionPower "Emission power" = 1.0f,
+105 FLOAT m_fHeightScale   "Height map scale" = 1.0f,
 
 {
   CTFileName m_fnOldModel;  // used for remembering last selected model (not saved at all)
@@ -452,6 +457,19 @@ functions:
     return m_stClusterShadows!=ST_NONE;
   };
 
+  /* Get entity's model emission parameters (shader pipeline only) */
+  void GetEmissionParameters(COLOR& colEmission, FLOAT& fPower)
+  {
+      colEmission = m_colEmission;
+      fPower = m_fEmissionPower;
+  };
+
+  /* Get entity's model height scale (shader pipeline only) */
+  FLOAT GetHeightMapScale()
+  {
+      return m_fHeightScale;
+  };
+
   // apply mirror and stretch to the entity
   void MirrorAndStretch(FLOAT fStretch, BOOL bMirrorX)
   {
@@ -516,6 +534,12 @@ functions:
     if( m_fnBump == CTString("Models\\Editor\\Vector.tex")) {
       m_fnBump = CTString("");
     }
+    if (m_fnHeight == CTString("Models\\Editor\\Vector.tex")) {
+      m_fnHeight = CTString("");
+    }
+    if (m_fnEmission == CTString("Models\\Editor\\Vector.tex")) {
+        m_fnEmission = CTString("");
+    }
 
     if (m_bActive) {
       InitAsModel();
@@ -550,6 +574,8 @@ functions:
         m_fnReflection = GetModelObject()->mo_toReflection.GetName();
         m_fnSpecular = GetModelObject()->mo_toSpecular.GetName();
         m_fnBump = GetModelObject()->mo_toBump.GetName();
+        m_fnHeight = GetModelObject()->mo_toHeight.GetName();
+        m_fnEmission = GetModelObject()->mo_toEmission.GetName();
       }
     }
     
@@ -569,6 +595,8 @@ functions:
       GetModelObject()->mo_toReflection.SetData_t(m_fnReflection);
       GetModelObject()->mo_toSpecular.SetData_t(m_fnSpecular);
       GetModelObject()->mo_toBump.SetData_t(m_fnBump);
+      GetModelObject()->mo_toHeight.SetData_t(m_fnHeight);
+      GetModelObject()->mo_toEmission.SetData_t(m_fnEmission);
     } catch (char *strError) {
       WarningMessage(strError);
     }
@@ -644,6 +672,8 @@ functions:
     slUsedMemory += m_fnReflection.Length();
     slUsedMemory += m_fnSpecular.Length();
     slUsedMemory += m_fnBump.Length();
+    slUsedMemory += m_fnHeight.Length();
+    slUsedMemory += m_fnEmission.Length();
     slUsedMemory += m_strName.Length();
     slUsedMemory += m_strDescription.Length();
     slUsedMemory += m_fnmLightAnimation.Length();
