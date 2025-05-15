@@ -19,6 +19,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Base/Statistics_internal.h>
 #include <Engine/Base/Console.h>
+#include <Engine/Base/ListIterator.inl>
+#include <Engine/Light/LightSource.h>
 #include <Engine/Math/Projection.h>
 #include <Engine/Graphics/RenderScene.h>
 #include <Engine/Graphics/Texture.h>
@@ -26,8 +28,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/GfxProfile.h>
 #include <Engine/Graphics/ShadowMap.h>
 #include <Engine/Graphics/Fog_internal.h>
+#include <Engine/Graphics/GfxShader.h>
+#include <Engine/Graphics/GfxUniformBuffer.h>
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Brushes/BrushTransformed.h>
+#include <Engine/World/World.h>
+#include <Engine/Rendering/Render.h>
 
 #include <Engine/Templates/StaticStackArray.cpp>
 
@@ -40,7 +46,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #define ASMOPT 1
 
-#define MAXTEXUNITS   4
+#define MAXTEXUNITS   7
 #define SHADOWTEXTURE 3
 
 extern INDEX wld_bShowTriangles;
@@ -59,6 +65,7 @@ extern BOOL _bMultiPlayer;
 extern BOOL CVA_bWorld;
 static GfxAPIType eAPI;
 
+ENGINE_API extern CWorldRenderPrefs _wrpWorldRenderPrefs;
 
 // vertex coordinates and elements used by one pass of polygons
 static CStaticStackArray<GFXVertex>   _avtxPass;   
@@ -80,19 +87,28 @@ CStaticStackArray<GFXVertex3> _avtxScene;
 #define GF_HAZE (1L<<8)
 #define GF_SEL  (1L<<9)
 #define GF_KEY  (1L<<10) // first layer requires alpha-keying
+#define GF_FB   (1L<<11)
+#define GF_SPEC (1L<<12) // specular layer
+#define GF_NRM  (1L<<13) // normal layer
+#define GF_HGH  (1L<<14) // height layer
 
 // texture combinations for max 4 texture units (fog, haze and selection not included)
-#define GF_TX0_TX1         (1L<<11)
-#define GF_TX0_TX2         (1L<<12)
-#define GF_TX0_SHD         (1L<<13)
-#define GF_TX2_SHD         (1L<<14)  // second pass
-#define GF_TX0_TX1_TX2     (1L<<15)
-#define GF_TX0_TX1_SHD     (1L<<16)
-#define GF_TX0_TX2_SHD     (1L<<17)
-#define GF_TX0_TX1_TX2_SHD (1L<<18)
+#define GF_TX0_TX1         (1L<<15)
+#define GF_TX0_TX2         (1L<<16)
+#define GF_TX0_SHD         (1L<<17)
+#define GF_TX2_SHD         (1L<<18)  // second pass
+#define GF_TX0_TX1_TX2     (1L<<19)
+#define GF_TX0_TX1_SHD     (1L<<20)
+#define GF_TX0_TX2_SHD     (1L<<21)
+#define GF_TX0_TX1_TX2_SHD (1L<<22)
+
+// texture units for material texures always has same indices
+#define TEX_UNIT_SPECULAR 4
+#define TEX_UNIT_NORMAL   5
+#define TEX_UNIT_HEIGHT   6
 
 // total number of groups
-#define GROUPS_MAXCOUNT (1L<<11)   // max group +1 !
+#define GROUPS_MAXCOUNT (1L<<15)   // max group +1 !
 #define GROUPS_MINCOUNT (1L<<4)-1  // min group !
 static ScenePolygon *_apspoGroups[GROUPS_MAXCOUNT];
 static INDEX _ctGroupsCount=0;
@@ -286,7 +302,7 @@ static void RSRemoveDummyPolygons( ScenePolygon *pspoAll, ScenePolygon **ppspoNo
 
 
 // bin polygons into groups
-static void RSBinToGroups( ScenePolygon *pspoFirst)
+static void RSBinToGroups(ScenePolygon *pspoFirst, CWorld* pWorld)
 {
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_RS_BINTOGROUPS);
   // clamp texture layers
@@ -356,6 +372,30 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
       }
     }
 
+    // if it has specular texture active
+    if (pspo->spo_aptoTexturesMtl[0] != NULL) {
+        _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
+        // TODO: maybe need call RSMakeMipFactorAndAdjustMapping for it?
+        ulBits |= GF_SPEC;
+        _ctGroupsCount |= GF_SPEC;
+    }
+
+    // if it has normal texture active
+    if (pspo->spo_aptoTexturesMtl[1] != NULL) {
+        _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
+        // TODO: maybe need call RSMakeMipFactorAndAdjustMapping for it?
+        ulBits |= GF_NRM;
+        _ctGroupsCount |= GF_NRM;
+    }
+
+    // if it has height texture active
+    if (pspo->spo_aptoTexturesMtl[2] != NULL) {
+        _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
+        // TODO: maybe need call RSMakeMipFactorAndAdjustMapping for it?
+        ulBits |= GF_HGH;
+        _ctGroupsCount |= GF_HGH;
+    }
+
     // if it has shadowmap active
     if( pspo->spo_psmShadowMap!=NULL && wld_bRenderShadowMaps) {
       _pfGfxProfile.IncrementCounter( CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
@@ -379,13 +419,19 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
               ULONG ulB = ClampUp( ((ULONG)ubB)<<1, 255UL);
               colFlat = RGBToColor(ulR,ulG,ulB);
             }
-          } // mix color in the first texture layer
-          COLOR &colTotal = pspo->spo_acolColors[0];
-          COLOR  colLayer = pspo->spo_acolColors[3];
-          if( colTotal==0xFFFFFFFF) colTotal = colLayer;
-          else if( colLayer!=0xFFFFFFFF) colTotal = MulColors( colTotal, colLayer);
-          if(  colTotal==0xFFFFFFFF) colTotal = colFlat;
-          else colTotal = MulColors( colTotal,  colFlat);
+          } 
+          // Mix color in the first texture layer (only for non-shader cases)
+          // Don't need to update poly layer in case of shader enabled (directional & ambient calcualted in shader)
+          if (!pWorld->wo_sBrushShaderInfo.gsi_bLoaded)
+          {
+              COLOR& colTotal = pspo->spo_acolColors[0];
+              COLOR  colLayer = pspo->spo_acolColors[3];
+              if (colTotal == 0xFFFFFFFF) colTotal = colLayer;
+              else if (colLayer != 0xFFFFFFFF) colTotal = MulColors(colTotal, colLayer);
+              if (colTotal == 0xFFFFFFFF) colTotal = colFlat;
+              else colTotal = MulColors(colTotal, colFlat);
+          }
+
           psmShadow->MarkDrawn();
         }
         else {
@@ -403,6 +449,13 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
       }
     }
 
+    // if it has fullbright flag
+    auto* psbp = (CBrushPolygon*)(pspo->spo_pvPolygon);
+    if (psbp->bpo_ulFlags & BPOF_FULLBRIGHT) {
+        _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
+        _ctGroupsCount |= GF_FB;
+        ulBits |= GF_FB;
+    }
     // if it has fog active
     if( pspo->spo_ulFlags&SPOF_RENDERFOG) {
       _pfGfxProfile.IncrementCounter( CGfxProfile::PCI_RS_TRIANGLEPASSESORG, ctTris);
@@ -653,8 +706,16 @@ static void RSMakeVertexCoordinates( ScenePolygon *pspoGroup)
   _atexPass[1].PopAll();
   _atexPass[2].PopAll();
   _atexPass[3].PopAll();
+  _atexPass[4].PopAll();
+  _atexPass[5].PopAll();
+  _atexPass[6].PopAll();
   _acolPass.Push(ctGroupVtx);
+  
+  // regular layers
   for( INDEX i=0; i<_ctUsableTexUnits; i++) _atexPass[i].Push(ctGroupVtx);
+  // material layers (shader pipeline)
+  for (INDEX i = 4; i < MAXTEXUNITS; i++) _atexPass[i].Push(ctGroupVtx);
+
 
   // done
   _pfGfxProfile.StopTimer( CGfxProfile::PTI_RS_MAKEVERTEXCOORDS);
@@ -726,7 +787,7 @@ static void RSSetTextureColors( ScenePolygon *pspoGroup, ULONG ulLayerMask)
 
 // make texture coordinates for one texture in all polygons in group
 static INDEX _iLastUnit = -1;
-static void RSSetTextureCoords( ScenePolygon *pspoGroup, INDEX iLayer, INDEX iUnit)
+static void RSSetTextureCoords( ScenePolygon *pspoGroup, INDEX iLayer, INDEX iUnit, BOOL bMaterialLayers = FALSE)
 {
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_RS_SETTEXCOORDS);
   // eventualy switch texture unit
@@ -742,86 +803,54 @@ static void RSSetTextureCoords( ScenePolygon *pspoGroup, INDEX iLayer, INDEX iUn
 
   for( ScenePolygon *pspo=pspoGroup; pspo!=NULL; pspo=pspo->spo_pspoSucc)
   {
-    ASSERT( pspo->spo_ctVtx>0);
+    // Miracle fix! Don't remove it, otherwise it will shit itself (the observer effect in action!)
+    if (iUnit > (MAXTEXUNITS - 1))
+    {
+        CPrintF("OBOSRALSIA!");
+    }
+
+    ASSERT(iUnit < MAXTEXUNITS);
+    ASSERT(pspo->spo_ctVtx>0);
     const FLOAT3D &vN = ((CBrushPolygon*)pspo->spo_pvPolygon)->bpo_pbplPlane->bpl_pwplWorking->wpl_plView;
-    const GFXVertex   *pvtx = &_avtxPass[pspo->spo_iVtx0Pass];
-          GFXTexCoord *ptex = &_atexPass[iUnit][pspo->spo_iVtx0Pass];
+    const GFXVertex   *pvtx = &(_avtxPass[pspo->spo_iVtx0Pass]);
+          GFXTexCoord *ptex = &(_atexPass[iUnit][pspo->spo_iVtx0Pass]);
     
-    // reflective mapping?
-    if( pspo->spo_aubTextureFlags[iLayer] & STXF_REFLECTION) {
-      for( INDEX i=0; i<pspo->spo_ctVtx; i++) { 
-        const FLOAT fNorm = 1.0f / sqrt(pvtx[i].x*pvtx[i].x + pvtx[i].y*pvtx[i].y + pvtx[i].z*pvtx[i].z);
-        const FLOAT fVx = pvtx[i].x *fNorm;
-        const FLOAT fVy = pvtx[i].y *fNorm;
-        const FLOAT fVz = pvtx[i].z *fNorm;
-        const FLOAT fNV = fVx*vN(1) + fVy*vN(2) + fVz*vN(3);
-        const FLOAT fRVx = fVx - 2*vN(1)*fNV;
-        const FLOAT fRVy = fVy - 2*vN(2)*fNV;
-        const FLOAT fRVz = fVz - 2*vN(3)*fNV;
-        const FLOAT fRVxT = fRVx*mViewer(1,1) + fRVy*mViewer(2,1) + fRVz*mViewer(3,1);
-        const FLOAT fRVzT = fRVx*mViewer(1,3) + fRVy*mViewer(2,3) + fRVz*mViewer(3,3);
-        ptex[i].s = fRVxT*0.5f +0.5f;
-        ptex[i].t = fRVzT*0.5f +0.5f;
-      }
-      // advance to next polygon
-      continue;
+    // reflective mapping supported only by regular textures (do we need it in shader pipeline?)
+    if (!bMaterialLayers)
+    {
+        if (pspo->spo_aubTextureFlags[iLayer] & STXF_REFLECTION) {
+            for (INDEX i = 0; i < pspo->spo_ctVtx; i++) {
+                const FLOAT fNorm = 1.0f / sqrt(pvtx[i].x * pvtx[i].x + pvtx[i].y * pvtx[i].y + pvtx[i].z * pvtx[i].z);
+                const FLOAT fVx = pvtx[i].x * fNorm;
+                const FLOAT fVy = pvtx[i].y * fNorm;
+                const FLOAT fVz = pvtx[i].z * fNorm;
+                const FLOAT fNV = fVx * vN(1) + fVy * vN(2) + fVz * vN(3);
+                const FLOAT fRVx = fVx - 2 * vN(1) * fNV;
+                const FLOAT fRVy = fVy - 2 * vN(2) * fNV;
+                const FLOAT fRVz = fVz - 2 * vN(3) * fNV;
+                const FLOAT fRVxT = fRVx * mViewer(1, 1) + fRVy * mViewer(2, 1) + fRVz * mViewer(3, 1);
+                const FLOAT fRVzT = fRVx * mViewer(1, 3) + fRVy * mViewer(2, 3) + fRVz * mViewer(3, 3);
+                ptex[i].s = fRVxT * 0.5f + 0.5f;
+                ptex[i].t = fRVzT * 0.5f + 0.5f;
+            }
+            // advance to next polygon
+            continue;
+        }
     }
 
-    // diffuse mapping
-    const FLOAT3D &vO = pspo->spo_amvMapping[iLayer].mv_vO;
+    CMappingVectors* mapping = (bMaterialLayers == TRUE ? pspo->spo_amvMappingMtl : pspo->spo_amvMapping);
+    const FLOAT3D& vO = mapping[iLayer].mv_vO;
+    const FLOAT3D& vU = mapping[iLayer].mv_vU;
+    const FLOAT3D& vV = mapping[iLayer].mv_vV;
 
-#if ASMOPT == 1
-    __asm {
-      mov     esi,D [pspo]
-      mov     edi,D [iMappingOffset]
-      lea     eax,[esi].spo_amvMapping[edi].mv_vO
-      lea     ebx,[esi].spo_amvMapping[edi].mv_vU
-      lea     ecx,[esi].spo_amvMapping[edi].mv_vV
-      mov     edx,D [esi].spo_ctVtx
-      mov     esi,D [pvtx]
-      mov     edi,D [ptex]
-vtxLoop:
-      fld     D [ebx+0]
-      fld     D [esi]GFXVertex.x
-      fsub    D [eax+0]
-      fmul    st(1),st(0)
-      fmul    D [ecx+0]   // vV(1)*fDX, vU(1)*fDX
-      fld     D [ebx+4]
-      fld     D [esi]GFXVertex.y
-      fsub    D [eax+4]
-      fmul    st(1),st(0)
-      fmul    D [ecx+4]   // vV(2)*fDY, vU(2)*fDY, vV(1)*fDX, vU(1)*fDX
-      fld     D [ebx+8]
-      fld     D [esi]GFXVertex.z
-      fsub    D [eax+8]
-      fmul    st(1),st(0)
-      fmul    D [ecx+8]   // vV(3)*fDZ, vU(3)*fDZ, vV(2)*fDY, vU(2)*fDY, vV(1)*fDX, vU(1)*fDX
-      fxch    st(5)
-      faddp   st(3),st(0) // vU(3)*fDZ, vV(2)*fDY, vU(1)*fDX+vU(2)*fDY, vV(1)*fDX, vV(3)*fDZ
-      fxch    st(1)
-      faddp   st(3),st(0) // vU(3)*fDZ, vU(1)*fDX+vU(2)*fDY, vV(1)*fDX+vV(2)*fDY, vV(3)*fDZ
-      faddp   st(1),st(0) // vU(1)*fDX+vU(2)*fDY+vU(3)*fDZ,  vV(1)*fDX+vV(2)*fDY, vV(3)*fDZ
-      fxch    st(1)
-      faddp   st(2),st(0) // vU(1)*fDX+vU(2)*fDY+vU(3)*fDZ,  vV(1)*fDX+vV(2)*fDY+vV(3)*fDZ
-      fstp    D [edi]GFXTexCoord.s
-      fstp    D [edi]GFXTexCoord.t
-      add     esi,4*4
-      add     edi,2*4
-      dec     edx
-      jnz     vtxLoop
+    for (INDEX i = 0; i < pspo->spo_ctVtx; i++)
+    {
+        const FLOAT fDX = pvtx[i].x - vO(1);
+        const FLOAT fDY = pvtx[i].y - vO(2);
+        const FLOAT fDZ = pvtx[i].z - vO(3);
+        ptex[i].s = ((vU(1) * fDX) + (vU(2) * fDY) + (vU(3) * fDZ));
+        ptex[i].t = ((vV(1) * fDX) + (vV(2) * fDY) + (vV(3) * fDZ));
     }
-#else
-    const FLOAT3D &vO = pspo->spo_amvMapping[iLayer].mv_vO;
-    const FLOAT3D &vU = pspo->spo_amvMapping[iLayer].mv_vU;
-    const FLOAT3D &vV = pspo->spo_amvMapping[iLayer].mv_vV;
-    for( INDEX i=0; i<pspo->spo_ctVtx; i++) {
-      const FLOAT fDX = pvtx[i].x -vO(1);
-      const FLOAT fDY = pvtx[i].y -vO(2);
-      const FLOAT fDZ = pvtx[i].z -vO(3);
-      ptex[i].s = vU(1)*fDX + vU(2)*fDY + vU(3)*fDZ;
-      ptex[i].t = vV(1)*fDX + vV(2)*fDY + vV(3)*fDZ;
-    }
-#endif
   }
 
   // init array
@@ -867,6 +896,41 @@ static void RSSetHazeCoordinates( ScenePolygon *pspoGroup)
   _pfGfxProfile.StopTimer( CGfxProfile::PTI_RS_SETTEXCOORDS);
 }
 
+// bind meterial textures to texture units (shader pipeline only)
+static void RSPrepareMaterialLayers(ScenePolygon* pspo)
+{
+    auto* bp = (CBrushPolygon*)pspo->spo_pvPolygon;
+    auto* world = bp->bpo_pbscSector
+        ->bsc_pbmBrushMip
+        ->bm_pbrBrush
+        ->br_penEntity
+        ->en_pwoWorld;
+
+    if (!world->wo_sBrushShaderInfo.gsi_bLoaded) return;
+
+    for (INDEX iLayer = 0; iLayer < 3; iLayer++)
+    {
+        INDEX iTexUnit = iLayer + 4;
+
+        if (pspo->spo_aptoTexturesMtl[iLayer] != NULL)
+        {
+            CTextureData* ptd = (CTextureData*)pspo->spo_aptoTexturesMtl[iLayer]->GetData();
+            const INDEX iFrameNo = pspo->spo_aptoTexturesMtl[iLayer]->GetFrame();
+
+            gfxSetTextureUnit(iTexUnit);
+            if (_ptdLastTex[iTexUnit] != ptd || _iLastFrameNo[iTexUnit] != iFrameNo || _ulLastFlags[iTexUnit] != pspo->spo_aubTextureFlagsMtl[iLayer]) 
+            {
+                _ptdLastTex[iTexUnit] = ptd;  
+                _iLastFrameNo[iTexUnit] = iFrameNo;  
+                _ulLastFlags[iTexUnit] = pspo->spo_aubTextureFlagsMtl[iLayer];
+
+                RSSetTextureWrapping(pspo->spo_aubTextureFlagsMtl[iLayer]);
+                ptd->SetAsCurrent(iFrameNo);
+            }
+        }
+    }
+}
+
 
 // render textures for all triangles in polygon list
 static void RSRenderTEX( ScenePolygon *pspoFirst, INDEX iLayer)
@@ -890,11 +954,16 @@ static void RSRenderTEX( ScenePolygon *pspoFirst, INDEX iLayer)
       _ulLastFlags[0]  = pspo->spo_aubTextureFlags[iLayer];
       _iLastFrameNo[0] = iFrameNo;
       // set texture parameters if needed
+      gfxSetTextureUnit(0);
       RSSetTextureWrapping(   pspo->spo_aubTextureFlags[iLayer]);
       RSSetTextureParameters( pspo->spo_aubTextureFlags[iLayer]);
       // prepare texture to be used by accelerator
       ptdTextureData->SetAsCurrent(iFrameNo);
     }
+
+    // prepare material textures (only for shader pipeline)
+    RSPrepareMaterialLayers(pspo);
+
     // render all triangles
     AddElements(pspo);
   }
@@ -918,6 +987,7 @@ static void RSRenderSHD( ScenePolygon *pspoFirst)
     ASSERT( psmShadow!=NULL);  // shadows have been already sorted out
 
     // set texture parameters if needed
+    gfxSetTextureUnit(0);
     RSSetTextureWrapping(   pspo->spo_aubTextureFlags[SHADOWTEXTURE]);
     RSSetTextureParameters( pspo->spo_aubTextureFlags[SHADOWTEXTURE]);
 
@@ -963,6 +1033,10 @@ static void RSRenderTEX_SHD( ScenePolygon *pspoFirst, INDEX iLayer)
       // set rendering parameters if needed
       RSSetTextureParametersMT( pspo->spo_aubTextureFlags[iLayer]);
     }
+
+    // prepare material textures (only for shader pipeline)
+    RSPrepareMaterialLayers(pspo);
+
     // batch triangles
     AddElements(pspo);
   }
@@ -1004,6 +1078,10 @@ static void RSRender2TEX( ScenePolygon *pspoFirst, INDEX iLayer2)
       // set rendering parameters if needed
       RSSetTextureParametersMT( pspo->spo_aubTextureFlags[0]);
     }
+
+    // prepare material textures (only for shader pipeline)
+    RSPrepareMaterialLayers(pspo);
+
     // render all triangles
     AddElements(pspo);
   }
@@ -1058,6 +1136,10 @@ static void RSRender2TEX_SHD( ScenePolygon *pspoFirst, INDEX iLayer2)
       // set rendering parameters if needed
       RSSetTextureParametersMT( pspo->spo_aubTextureFlags[0]);
     }
+
+    // prepare material textures (only for shader pipeline)
+    RSPrepareMaterialLayers(pspo);
+
     // render all triangles
     AddElements(pspo);
   }
@@ -1110,6 +1192,10 @@ static void RSRender3TEX( ScenePolygon *pspoFirst)
       // set rendering parameters if needed
       RSSetTextureParametersMT( pspo->spo_aubTextureFlags[0]);
     }
+
+    // prepare material textures (only for shader pipeline)
+    RSPrepareMaterialLayers(pspo);
+
     // render all triangles
     AddElements(pspo);
   }
@@ -1172,6 +1258,10 @@ static void RSRender3TEX_SHD( ScenePolygon *pspoFirst)
       // set rendering parameters if needed
       RSSetTextureParametersMT( pspo->spo_aubTextureFlags[0]);
     }
+
+    // prepare material textures (only for shader pipeline)
+    RSPrepareMaterialLayers(pspo);
+
     // render all triangles
     AddElements(pspo);
   }
@@ -1260,8 +1350,8 @@ static void RSStartupHaze(void)
 
 
 // process one group of polygons
-void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags);
-void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedFlags)
+void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld* pWorld = nullptr);
+void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedFlags, CWorld* pWorld)
 {
   // skip if the group is empty
   if( pspoGroup==NULL) return;
@@ -1281,10 +1371,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByDualTexturing( pspoGroup, 0, SHADOWTEXTURE, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pWorld);
       ulGroupFlags &= ~(GF_TX0|GF_SHD);
       ulGroupFlags |=   GF_TX0_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pWorld);
       return;
     }
 
@@ -1297,10 +1387,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByDualTexturing( pspoGroup, 0, 1, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX1;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pWorld);
       ulGroupFlags &= ~(GF_TX0|GF_TX1);
       ulGroupFlags |=   GF_TX0_TX1;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pWorld);
       return;
     }
 
@@ -1314,10 +1404,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByDualTexturing( pspoGroup, 0, 2, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX2;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pWorld);
       ulGroupFlags &= ~(GF_TX0|GF_TX2);
       ulGroupFlags |=   GF_TX0_TX2;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pWorld);
       return;
     }
 
@@ -1331,10 +1421,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByDualTexturing( pspoGroup, 2, SHADOWTEXTURE, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX2_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pWorld);
       ulGroupFlags &= ~(GF_TX2|GF_SHD);
       ulGroupFlags |=   GF_TX2_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pWorld);
       return;
     }
   }
@@ -1351,10 +1441,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByQuadTexturing( pspoGroup, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX1_TX2_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pWorld);
       ulGroupFlags &= ~(GF_TX0_TX1|GF_TX2_SHD);
       ulGroupFlags |=   GF_TX0_TX1_TX2_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pWorld);
       return;
     }
   } 
@@ -1371,10 +1461,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByTripleTexturing( pspoGroup, 1, 2, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX1_TX2;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pWorld);
       ulGroupFlags &= ~(GF_TX0_TX1|GF_TX2);
       ulGroupFlags |=   GF_TX0_TX1_TX2;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pWorld);
       return;
     }
 
@@ -1388,10 +1478,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByTripleTexturing( pspoGroup, 1, SHADOWTEXTURE, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX1_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pWorld);
       ulGroupFlags &= ~(GF_TX0_TX1|GF_SHD);
       ulGroupFlags |=   GF_TX0_TX1_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pWorld);
       return;
     }
 
@@ -1405,10 +1495,10 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
       RSBinByTripleTexturing( pspoGroup, 2, SHADOWTEXTURE, &pspoST, &pspoMT);
       // process the two groups separately
       ulTestedFlags |= GF_TX0_TX2_SHD;
-      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoST, ulGroupFlags, ulTestedFlags, pWorld);
       ulGroupFlags &= ~(GF_TX0_TX2|GF_SHD);
       ulGroupFlags |=   GF_TX0_TX2_SHD;
-      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags);
+      RSRenderGroup( pspoMT, ulGroupFlags, ulTestedFlags, pWorld);
       return;
     }
   }
@@ -1423,7 +1513,7 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
   // if unlimited lock count
   if( iMaxBurstSize==0)
   { // render whole group
-    RSRenderGroupInternal( pspoGroup, ulGroupFlags);
+    RSRenderGroupInternal( pspoGroup, ulGroupFlags, pWorld);
   }
   // if lock count is specified
   else
@@ -1439,15 +1529,154 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
         pspoGroup = pspoGroup->spo_pspoSucc;
       } // render one group segment
       pspoLast->spo_pspoSucc = NULL;
-      RSRenderGroupInternal( pspoThis, ulGroupFlags);
+      RSRenderGroupInternal( pspoThis, ulGroupFlags, pWorld);
     }
   }
 }
 
+void RSUpdateShaderUniforms(const SBrushShaderUniforms& rsUniforms, ScenePolygon* pspoGroup, ULONG ulGroupFlags)
+{
+    // Prepare data for shader variables
+    INT32 iaTextures[3] = { -1, -1, -1 };
+    INT32 iaBlendings[3] = { 0, 0, 0 };
+    INT32 iaMaterialUsage[3] = { 0, 0, 0 };
+    INT32 iShadowTexture = -1;
+    INT32 iActiveLayersCount = 0;
+    INT32 iShadowUsed = 0;
 
+    // material layers usage
+    if (ulGroupFlags & GF_SPEC)
+    {
+        iaMaterialUsage[0] = (INT32)TRUE;
+    }
+
+    if (ulGroupFlags & GF_NRM)
+    {
+        iaMaterialUsage[1] = (INT32)TRUE;
+    }
+
+    if (ulGroupFlags & GF_HGH)
+    {
+        iaMaterialUsage[2] = (INT32)TRUE;
+    }
+
+    // layers 0 + shadow
+    if (ulGroupFlags & GF_TX0_SHD)
+    {
+        iaTextures[0] = 0;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iShadowTexture = 1;
+        iShadowUsed = (INT32)TRUE;
+        iActiveLayersCount = 1;
+    }
+    // layers 0, 1
+    else if (ulGroupFlags & GF_TX0_TX1)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[1];
+        iActiveLayersCount = 2;
+    }
+    // layers 0, 1 + shadow
+    else if (ulGroupFlags & GF_TX0_TX1_SHD)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[1];
+        iShadowTexture = 2;
+        iShadowUsed = (INT32)TRUE;
+        iActiveLayersCount = 2;
+    }
+    // layers 0, 2
+    else if (ulGroupFlags & GF_TX0_TX2)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[2];
+        iActiveLayersCount = 2;
+    }
+    // layers 0, 2 + shadow
+    else if (ulGroupFlags & GF_TX0_TX2_SHD)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[2];
+        iShadowTexture = 2;
+        iShadowUsed = (INT32)TRUE;
+        iActiveLayersCount = 2;
+    }
+    // layers 0, 1, 2
+    else if (ulGroupFlags & GF_TX0_TX1_TX2)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaTextures[2] = 2;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[1];
+        iaBlendings[2] = pspoGroup->spo_aubTextureFlags[2];
+        iActiveLayersCount = 3;
+    }
+    // layers 0, 1, 2 + shadow
+    else if (ulGroupFlags & GF_TX0_TX1_TX2_SHD)
+    {
+        iaTextures[0] = 0;
+        iaTextures[1] = 1;
+        iaTextures[2] = 2;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iaBlendings[1] = pspoGroup->spo_aubTextureFlags[1];
+        iaBlendings[2] = pspoGroup->spo_aubTextureFlags[2];
+        iShadowTexture = 3;
+        iShadowUsed = (INT32)TRUE;
+        iActiveLayersCount = 3;
+    }
+    else if (ulGroupFlags & GF_TX0)
+    {
+        iaTextures[0] = 0;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[0];
+        iActiveLayersCount = 1;
+    }
+    else if (ulGroupFlags & GF_TX1)
+    {
+        iaTextures[0] = 0;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[1];
+        iActiveLayersCount = 1;
+    }
+    else if (ulGroupFlags & GF_TX2)
+    {
+        iaTextures[0] = 0;
+        iaBlendings[0] = pspoGroup->spo_aubTextureFlags[2];
+        iActiveLayersCount = 1;
+    }
+    else if (ulGroupFlags & GF_SHD)
+    {
+        iShadowTexture = 0;
+        iShadowUsed = (INT32)TRUE;
+    }
+
+    // Texture units & blending for each layer
+    gfxUniform1i(rsUniforms.wsu_iTexLayer0, iaTextures[0]);
+    gfxUniform1i(rsUniforms.wsu_iTexLayer1, iaTextures[1]);
+    gfxUniform1i(rsUniforms.wsu_iTexLayer2, iaTextures[2]);
+    gfxUniform1iv(rsUniforms.wsu_iLayersBlending, 3, iaBlendings);
+    gfxUniform1i(rsUniforms.wsu_iActiveLayers, iActiveLayersCount);
+
+    // Shadow texture
+    gfxUniform1i(rsUniforms.wsu_iTexShadow, iShadowTexture);
+    gfxUniform1i(rsUniforms.wsu_iUseShadow, iShadowUsed);
+
+    // Material textures
+    gfxUniform1i(rsUniforms.wsu_iTexSpec, TEX_UNIT_SPECULAR);
+    gfxUniform1i(rsUniforms.wsu_iTexNormal, TEX_UNIT_NORMAL);
+    gfxUniform1i(rsUniforms.wsu_iTexHeight, TEX_UNIT_HEIGHT);
+    gfxUniform1iv(rsUniforms.wsu_iMaterialUsage, 3, iaMaterialUsage);
+}
 
 // internal group rendering routine
-void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
+void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld* pWorld)
 {
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_RS_RENDERGROUPINTERNAL);
   _pfGfxProfile.IncrementCounter( CGfxProfile::PCI_RS_POLYGONGROUPS);
@@ -1465,32 +1694,192 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
   else gfxDisableAlphaTest();
   
   _iLastUnit = 0; // reset mulitex unit change
+  BOOL bUsedShader = FALSE;
   BOOL bUsedMT = FALSE;
   BOOL bUsesMT = ulGroupFlags & (GF_TX0_TX1 | GF_TX0_TX2 | GF_TX0_SHD | GF_TX2_SHD 
                               |  GF_TX0_TX1_TX2 | GF_TX0_TX1_SHD | GF_TX0_TX2_SHD
                               |  GF_TX0_TX1_TX2_SHD);
+
+  // check for shader, use if set
+  if (pWorld && pWorld->wo_sBrushShaderInfo.gsi_bLoaded)
+  {
+      // Use shader program
+      gfxUseProgram(pWorld->wo_sBrushShaderInfo.gsi_pShader->Id());
+      bUsedShader = TRUE;
+
+      // Bind light-sources UBO
+      UINT iUboId = pWorld->wo_sBrushShaderInfo.gsi_pShaderUboLights->Id();
+      gfxBindBuffer(GL_UNIFORM_BUFFER, iUboId);
+
+      // MatriX & offset to transform coordinates
+      const FLOATmatrix3D& mViewer = _ppr->pr_ViewerRotationMatrix;
+      const FLOAT3D& vCameraPos = _ppr->pr_vViewerPosition;
+
+      // Get light-sources affecting polygon
+      INT iLightCount = 0;
+
+      // Should calculate lighting
+      BOOL bShadows = _wrpWorldRenderPrefs.wrp_shtShadows != CWorldRenderPrefs::ShadowsType::SHT_NONE;
+      BOOL bFullBright = ulGroupFlags & GF_FB;
+      BOOL bCalcLighting = bShadows && !bFullBright;
+
+      // To avoid adding same light-sources multiple times (when same light affects multiple polygons)
+      std::vector<CLightSource*> cAddedLights;
+      cAddedLights.reserve(MAX_BRUSH_LIGHTS);
+
+      // For all polygons in group
+      for (ScenePolygon* pspo = pspoGroup; pspo != NULL; pspo = pspo->spo_pspoSucc)
+      {
+          auto* psbp = (CBrushPolygon*)(pspo->spo_pvPolygon);
+          auto* pbsm = &(psbp->bpo_smShadowMap);
+
+          if (pbsm->GetShadowLayersCount() > 0)
+          {
+              FOREACHINLIST(CBrushShadowLayer, bsl_lnInShadowMap, pbsm->bsm_lhLayers, itbsl)
+              {
+                  // Light-source pointer
+                  CLightSource* plsLight = itbsl->bsl_plsLightSource;
+
+                  // Skip if already added
+                  if (std::find(cAddedLights.begin(), cAddedLights.end(), plsLight) != cAddedLights.end()) {
+                      continue;
+                  }
+
+                  // Mark as added
+                  cAddedLights.push_back(plsLight);
+
+                  // Skip lens flares
+                  if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
+                      continue;
+
+                  // Skip dark lights
+                  if (plsLight->ls_ulFlags & LSF_DARKLIGHT)
+                      continue;
+
+                  // If reached max light count - break the cycle
+                  if (iLightCount >= MAX_BRUSH_LIGHTS)
+                      break;
+                      
+                  // Get placement & orientation (world-space)
+                  const CPlacement3D& plLight = plsLight->ls_penEntity->GetPlacement();
+                  const FLOATmatrix3D& mLightRotation = plsLight->ls_penEntity->GetRotationMatrix();
+
+                  const FLOAT3D& vLight = plLight.pl_PositionVector;
+                  const FLOAT3D& vDirection = FLOAT3D(0.0f, 0.0f, -1.0f) * mLightRotation;
+
+                  // Convert to view-space
+                  const FLOAT3D vLightView = (vLight - vCameraPos) * mViewer;
+                  const FLOAT3D vDirectionView = vDirection * mViewer;
+
+                  // Colors
+                  UBYTE ubColor[3] = { 0, 0, 0 };
+                  UBYTE ubAmbient[3] = { 0, 0, 0 };
+                  ColorToRGB(plsLight->GetLightColor(), ubColor[0], ubColor[1], ubColor[2]);
+                  ColorToRGB(plsLight->GetLightAmbient(), ubAmbient[0], ubAmbient[1], ubAmbient[2]);
+
+                  // Light types
+                  WorldShaderLightType eType = WorldShaderLightType::WSLT_POINT;
+                  if (plsLight->ls_ulFlags & LSF_DIRECTIONAL) {
+                      eType = WorldShaderLightType::WSLT_DIRECTIONAL;
+                  }
+                  else if (plsLight->ls_ulFlags & LSF_CASTSHADOWS) {
+                      eType = WorldShaderLightType::WSLT_POINT;
+                  }
+                  else {
+                      eType = WorldShaderLightType::WSLT_AMBIENT;
+                  }
+
+                  // Prepare data
+                  SShaderLight sLightData = {};
+                  sLightData.wsl_vPosition = vLightView;
+                  sLightData.wsl_vDirection = vDirectionView;
+                  sLightData.wsl_vColor = FLOAT3D((FLOAT)ubColor[0] / 255.0f, (FLOAT)ubColor[1] / 255.0f, (FLOAT)ubColor[2] / 255.0f);
+                  sLightData.wsl_vColorAmbient = FLOAT3D((FLOAT)ubAmbient[0] / 255.0f, (FLOAT)ubAmbient[1] / 255.0f, (FLOAT)ubAmbient[2] / 255.0f);
+                  sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
+                  sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
+                  sLightData.wsl_uType = (UINT)eType;
+
+                  // Update UBO
+                  gfxBufferSubData(GL_UNIFORM_BUFFER, sizeof(SShaderLight) * iLightCount, sizeof(SShaderLight), &sLightData);
+
+                  // Count increases
+                  iLightCount++;
+              }
+          }
+      }
+
+      // Pass lighting usage information
+      auto& uniformIds = pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms;
+      gfxUniform1i(uniformIds.wsu_iUseLights, (INDEX)(bCalcLighting));
+      gfxUniform1i(uniformIds.wsu_iActiveLights, iLightCount);
+
+      // Rebind active UBO to binding 0 of brush shader
+      gfxBindBufferBase(GL_UNIFORM_BUFFER, 0, iUboId);
+  }
+
+  // mapping for material layers (shader pipeline only)
+  BOOL bUsedMtlTex = FALSE;
+  if (bUsedShader)
+  {
+      if (ulGroupFlags & GF_SPEC)
+      {
+          RSSetTextureCoords(pspoGroup, 0, TEX_UNIT_SPECULAR, TRUE);
+          bUsedMtlTex = TRUE;
+      }
+      if (ulGroupFlags & GF_NRM)
+      {
+          RSSetTextureCoords(pspoGroup, 1, TEX_UNIT_NORMAL, TRUE);
+          bUsedMtlTex = TRUE;
+      }
+      if (ulGroupFlags & GF_HGH)
+      {
+          RSSetTextureCoords(pspoGroup, 2, TEX_UNIT_HEIGHT, TRUE);
+          bUsedMtlTex = TRUE;
+      }
+  }
+
   // dual texturing
-  if( ulGroupFlags & GF_TX0_SHD) {
-    RSSetTextureCoords( pspoGroup, SHADOWTEXTURE, 1);
-    RSSetTextureCoords( pspoGroup, 0, 0);
-    RSSetTextureColors( pspoGroup, GF_TX0|GF_SHD);
-    RSRenderTEX_SHD( pspoGroup, 0);
-    bUsedMT = TRUE;
+  if (ulGroupFlags & GF_TX0_SHD) {
+      // regular layers
+      RSSetTextureCoords(pspoGroup, SHADOWTEXTURE, 1);
+      RSSetTextureCoords(pspoGroup, 0, 0);
+      RSSetTextureColors(pspoGroup, GF_TX0 | GF_SHD);
+
+      if (bUsedShader)
+      {
+          RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+      }
+
+      RSRenderTEX_SHD(pspoGroup, 0);
+      bUsedMT = TRUE;
   }
-  else if( ulGroupFlags & GF_TX0_TX1) {
-    RSSetTextureCoords( pspoGroup, 1, 1);
-    RSSetTextureCoords( pspoGroup, 0, 0);
-    RSSetTextureColors( pspoGroup, GF_TX0|GF_TX1);
-    RSRender2TEX( pspoGroup, 1);
-    bUsedMT = TRUE;
-  } 
-  else if( ulGroupFlags & GF_TX0_TX2) {
-    RSSetTextureCoords( pspoGroup, 2, 1);
-    RSSetTextureCoords( pspoGroup, 0, 0);
-    RSSetTextureColors( pspoGroup, GF_TX0|GF_TX2);
-    RSRender2TEX( pspoGroup, 2);
-    bUsedMT = TRUE;
+  else if (ulGroupFlags & GF_TX0_TX1) {
+      RSSetTextureCoords(pspoGroup, 1, 1);
+      RSSetTextureCoords(pspoGroup, 0, 0);
+      RSSetTextureColors(pspoGroup, GF_TX0 | GF_TX1);
+
+      if (bUsedShader)
+      {
+          RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+      }
+
+      RSRender2TEX(pspoGroup, 1);
+      bUsedMT = TRUE;
   }
+  else if (ulGroupFlags & GF_TX0_TX2) {
+      RSSetTextureCoords(pspoGroup, 2, 1);
+      RSSetTextureCoords(pspoGroup, 0, 0);
+
+      if (bUsedShader)
+      {
+          RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+      }
+
+      RSSetTextureColors(pspoGroup, GF_TX0 | GF_TX2);
+      RSRender2TEX(pspoGroup, 2);
+      bUsedMT = TRUE;
+  }
+
 
   // triple texturing
   else if( ulGroupFlags & GF_TX0_TX1_TX2) {
@@ -1498,6 +1887,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
     RSSetTextureCoords( pspoGroup, 1, 1);
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0|GF_TX1|GF_TX2);
+
+    if (bUsedShader)
+    {
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     RSRender3TEX( pspoGroup);
     bUsedMT = TRUE;
   }
@@ -1506,6 +1901,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
     RSSetTextureCoords( pspoGroup, 1, 1);
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0|GF_TX1|GF_SHD);
+
+    if (bUsedShader)
+    {
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     RSRender2TEX_SHD( pspoGroup, 1);
     bUsedMT = TRUE;
   }
@@ -1514,6 +1915,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
     RSSetTextureCoords( pspoGroup, 2, 1);
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0|GF_TX2|GF_SHD);
+
+    if (bUsedShader)
+    {
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     RSRender2TEX_SHD( pspoGroup, 2);
     bUsedMT = TRUE;
   }
@@ -1525,6 +1932,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
     RSSetTextureCoords( pspoGroup, 1, 1);
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0|GF_TX1|GF_TX2|GF_SHD);
+
+    if (bUsedShader)
+    {
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     RSRender3TEX_SHD( pspoGroup);
     bUsedMT = TRUE;
   }
@@ -1541,6 +1954,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
     RSSetTextureCoords( pspoGroup, SHADOWTEXTURE, 1);
     RSSetTextureCoords( pspoGroup, 2, 0);
     RSSetTextureColors( pspoGroup, GF_TX2|GF_SHD);
+
+    if (bUsedShader)
+    {
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     RSRenderTEX_SHD( pspoGroup, 2);
     bUsedMT = TRUE;
   }
@@ -1548,9 +1967,10 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
   ASSERT( !bUsedMT==!bUsesMT);
 
   // if some multi-tex units were used
-  if( bUsesMT) {
+  if( bUsesMT || bUsedMtlTex)
+  {
     // disable them now
-    for( INDEX i=1; i<_ctUsableTexUnits; i++) {
+    for( INDEX i=1; i<MAXTEXUNITS; i++) {
       gfxSetTextureUnit(i);
       gfxDisableTexture();
     }
@@ -1561,6 +1981,12 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
   // if group has color for first layer
   if( ulGroupFlags&GF_FLAT)
   { // render colors
+
+    if (bUsedShader)
+    {
+      RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     if( _bTranslucentPass) {
       // set opacity to 50%
       if( !wld_bRenderTextures) RSSetConstantColors( 0x3F3F3F7F);
@@ -1575,13 +2001,36 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
     }
     gfxDisableTexture();
     DrawAllElements( pspoGroup);
-  }   
+  }
+
+  // set material texture UV again for single tex rendering
+  if (bUsedShader)
+  {
+      if (ulGroupFlags & GF_SPEC)
+      {
+          RSSetTextureCoords(pspoGroup, 0, TEX_UNIT_SPECULAR, TRUE);
+      }
+      if (ulGroupFlags & GF_NRM)
+      {
+          RSSetTextureCoords(pspoGroup, 1, TEX_UNIT_NORMAL, TRUE);
+      }
+      if (ulGroupFlags & GF_HGH)
+      {
+          RSSetTextureCoords(pspoGroup, 2, TEX_UNIT_HEIGHT, TRUE);
+      }
+  }
 
   // if group has texture for first layer
   if( ulGroupFlags&GF_TX0) {
     // render texture 0
     RSSetTextureCoords( pspoGroup, 0, 0);
     RSSetTextureColors( pspoGroup, GF_TX0);
+
+    if (bUsedShader)
+    {
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     RSRenderTEX( pspoGroup, 0);
     // eventually prepare subsequent layers for transparency
     if( ulGroupFlags & GF_KEY) {
@@ -1589,19 +2038,52 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags)
       gfxDisableAlphaTest();
     }
   }
+
   // if group has texture for second layer
   if( ulGroupFlags & GF_TX1) {
     // render texture 1
     RSSetTextureCoords( pspoGroup, 1, 0);
     RSSetTextureColors( pspoGroup, GF_TX1);
+
+    if (bUsedShader)
+    {
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     RSRenderTEX( pspoGroup, 1);
   }
+
   // if group has texture for third layer
   if( ulGroupFlags & GF_TX2) {
     // render texture 2
     RSSetTextureCoords( pspoGroup, 2, 0);
     RSSetTextureColors( pspoGroup, GF_TX2);
+
+    if (bUsedShader)
+    {
+        RSUpdateShaderUniforms(pWorld->wo_sBrushShaderInfo.gsi_sBrushUniforms, pspoGroup, ulGroupFlags);
+    }
+
     RSRenderTEX( pspoGroup, 2);
+  }
+
+  // disable all material textures (to avoid glitches)
+  if (bUsedMtlTex)
+  {
+      for (INDEX i = 4; i < MAXTEXUNITS; i++) {
+          gfxSetTextureUnit(i);
+          gfxDisableTexture();
+      }
+
+      _iLastUnit = 0;
+      gfxSetTextureUnit(0);
+  }
+
+  // Disable shader if used
+  if (bUsedShader)
+  {
+      gfxBindBuffer(GL_UNIFORM_BUFFER, 0);
+      gfxUseProgram(0);
   }
 
   // if group has shadow
@@ -1703,7 +2185,7 @@ static void RSEnd(void)
 
 
 void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prProjection,
-                  COLOR colSelection, BOOL bTranslucent)
+                  COLOR colSelection, BOOL bTranslucent, CWorld* pWorld)
 {
   // check API
   eAPI = _pGfx->gl_eCurrentAPI;
@@ -1770,7 +2252,7 @@ void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prP
   RSCheckLayersUpToDate(pspoNonDummy);
 
   // bin polygons to groups by texture passes
-  RSBinToGroups(pspoNonDummy);
+  RSBinToGroups(pspoNonDummy, pWorld);
 
   // for each group                           
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_RS_RENDERGROUP);
@@ -1778,7 +2260,7 @@ void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prP
   for( INDEX iGroup=1; iGroup<_ctGroupsCount; iGroup++) {
     // get the group polygon list and render it if not empty
     ScenePolygon *pspoGroup = _apspoGroups[iGroup];
-    if( pspoGroup!=NULL) RSRenderGroup( pspoGroup, iGroup, 0);
+    if( pspoGroup!=NULL) RSRenderGroup( pspoGroup, iGroup, 0, pWorld);
   }
   _pfGfxProfile.StopTimer( CGfxProfile::PTI_RS_RENDERGROUP);
 

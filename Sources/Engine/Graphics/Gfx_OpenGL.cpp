@@ -83,6 +83,7 @@ extern BOOL  glbUsingVARs = FALSE;   // vertex_array_range
 #define DLLFUNCTION(dll, output, name, inputs, params, required) \
   output (__stdcall *p##name) inputs = NULL;
 #include "gl_functions.h"
+#include "gl_functions_shaders.h"
 #undef DLLFUNCTION
 
 // extensions
@@ -141,12 +142,24 @@ static void OGL_SetFunctionPointers_t(HINSTANCE hiOGL)
   #undef DLLFUNCTION
 }
 
+static void OGL_SetFunctionPointersShaders_t()
+{
+    const char* strName;
+#define DLLFUNCTION(dll, output, name, inputs, params, required) \
+    strName = #name;  \
+    p##name = (output (__stdcall*) inputs) pwglGetProcAddress(strName); \
+    if( required && p##name == NULL) FailFunction_t(strName);
+#include "gl_functions_shaders.h"
+#undef DLLFUNCTION
+}
+
 
 static void OGL_ClearFunctionPointers(void)
 {
   // clear gl function pointers
   #define DLLFUNCTION(dll, output, name, inputs, params, required) p##name = NULL;
   #include "gl_functions.h"
+  #include "gl_functions_shaders.h"
   #undef DLLFUNCTION
 }
 
@@ -459,6 +472,10 @@ BOOL CGfxLibrary::CreateContext_OGL(HDC hdc)
     //WIN_CHECKERROR(0, "MakeCurrent after CreateContext");
     return FALSE;
   }
+
+  // Load shader function pointers after context is active
+  OGL_SetFunctionPointersShaders_t();
+
   return TRUE;
 }
 

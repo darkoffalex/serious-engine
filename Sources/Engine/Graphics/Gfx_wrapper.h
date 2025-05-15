@@ -241,6 +241,36 @@ extern void (*gfxSetConstantColor)(COLOR col);
 extern void (*gfxEnableColorArray)(void);
 extern void (*gfxDisableColorArray)(void);
 
+// SHADERS
+
+extern UINT (*gfxCreateShader)(UINT shaderType);
+extern void (*gfxDeleteShader)(UINT shader);
+extern void (*gfxShaderSource)(UINT shader, INT32 count, const CHAR** string, const INT32* length);
+extern void (*gfxCompileShader)(UINT shader);
+extern void (*gfxGetShaderiv)(UINT shader, UINT pname, INT32* params);
+extern void (*gfxGetShaderInfoLog)(UINT shader, INT32 maxLength, INT32* length, CHAR* infoLog);
+extern UINT (*gfxCreateProgram)(void);
+extern void (*gfxDeleteProgram)(UINT program);
+extern void (*gfxAttachShader)(UINT program, UINT shader);
+extern void (*gfxLinkProgram)(UINT program);
+extern void (*gfxUseProgram)(UINT program);
+extern void (*gfxGetProgramiv)(UINT program, UINT pname, INT32* params);
+extern void (*gfxGetProgramInfoLog)(UINT program, INT32 maxLength, INT32* length, CHAR* infoLog);
+extern INT32(*gfxGetUniformLocation)(UINT program, const CHAR* name);
+extern void (*gfxUniformMatrix4fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value);
+extern void (*gfxUniform1i)(INT32 location, INT32 v0);
+extern void (*gfxUniform1iv)(INT32 location, INT32 count, const INT32* value);
+extern void (*gfxUniform1fv)(INT32 location, INT32 count, const FLOAT* value);
+extern void (*gfxUniform2fv)(INT32 location, INT32 count, const FLOAT* value);
+extern void (*gfxUniform3fv)(INT32 location, INT32 count, const FLOAT* value);
+extern void (*gfxUniform4fv)(INT32 location, INT32 count, const FLOAT* value);
+extern void (*gfxUniformMatrix3fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value);
+extern void (*gfxGenBuffers)(INT32 n, UINT* buffers);
+extern void (*gfxBindBuffer)(UINT target, UINT buffer);
+extern void (*gfxBufferData)(UINT target, SLONG size, const void* data, UINT usage);
+extern void (*gfxBufferSubData)(UINT target, SLONG offset, SLONG size, const void* data);
+extern void (*gfxBindBufferBase)(UINT target, UINT index, UINT buffer);
+extern void (*gfxDeleteBuffers)(INT32 n, const UINT* buffers);
 
 // MISC
 

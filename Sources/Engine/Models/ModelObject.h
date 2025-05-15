@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 class CAttachmentModelObject;
 class CRenderModel;
 class CModelInfo;
+struct SGfxShaderInfo;
 
 class ENGINE_API CModelObject : public CAnimObject {
 private:
@@ -38,6 +39,7 @@ private:
 
   // API version
   void RenderModel_View( CRenderModel &rm);
+  void RenderShaderModel_View(CRenderModel& rm, const SGfxShaderInfo& sShaderInfo);
   void RenderPatches_View( CRenderModel &rm);
   void AddSimpleShadow_View( CRenderModel &rm, const FLOAT fIntensity, const FLOATplane3D &plShadowPlane);
   void RenderShadow_View( CRenderModel &rm, const CPlacement3D &plLight,
@@ -51,6 +53,8 @@ public:
   CTextureObject mo_toReflection;				   	  		// texture used for reflection
   CTextureObject mo_toSpecular;				   					// texture used for specularity
   CTextureObject mo_toBump;   				   					// texture used for bump
+  CTextureObject mo_toHeight;                                   // texture used for displacement (POM)
+  CTextureObject mo_toEmission;                                 // texture used for emission surfaces
   FLOAT3D mo_Stretch;															// dynamic stretching vector, (usually 1,1,1)
   ULONG mo_ColorMask;															// mask telling what parts (colors) are visible
   INDEX mo_iLastRenderMipLevel;                   // last rendered mip model index remembered
@@ -122,7 +126,7 @@ public:
 
   // model rendering
   void SetupModelRendering( CRenderModel &rm);
-  void RenderModel( CRenderModel &rm);
+  void RenderModel( CRenderModel &rm, CWorld* pWorld = nullptr);
   void RenderPatches( CRenderModel &rm);
   void AddSimpleShadow( CRenderModel &rm, const FLOAT fIntensity,  const FLOATplane3D &plShadowPlane);
   void RenderShadow( CRenderModel &rm, const CPlacement3D &plLight,

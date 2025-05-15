@@ -1,21 +1,6 @@
-/* Copyright (c) 2002-2012 Croteam Ltd. 
-This program is free software; you can redistribute it and/or modify
-it under the terms of version 2 of the GNU General Public License as published by
-the Free Software Foundation
-
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
-
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by WorldEditor.rc
+// Включаемый файл, созданный в Microsoft Visual C++.
+// Используется WorldEditor.rc
 //
 #define ID_LOAD_PREFERENCES             3
 #define ID_SELECT_ALL                   3
@@ -198,6 +183,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define IDC_ALLIGN_X                    1015
 #define IDC_VIEW_NOISE_TEXTURE          1015
 #define IDC_FBM_RANDOMIZE               1015
+#define IDC_BROWSE_BR_VS                1015
 #define IDC_BUTTON2                     1016
 #define IDC_OK                          1016
 #define IDC_DELETE_MARKER               1016
@@ -227,25 +213,32 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define IDC_HEIGHT                      1019
 #define IDC_SCROLL_LEFT                 1019
 #define IDC_GENERATION_SETTINGS         1019
+#define IDC_BROWSE_BR_GS                1019
 #define IDC_BUTTON6                     1020
 #define IDC_LENGHT                      1020
 #define IDC_SCROLL_PG_LEFT              1020
+#define IDC_BROWSE_BR_FS                1020
 #define IDC_BUTTON7                     1021
 #define IDC_SHEARX                      1021
 #define IDC_SCROLL_PG_RIGHT             1021
+#define IDC_BROWSE_MD_VS                1021
 #define IDC_BUTTON8                     1022
 #define IDC_SHEARZ                      1022
 #define IDC_EDIT2                       1022
+#define IDC_BROWSE_MD_GS                1022
 #define IDC_BUTTON9                     1023
 #define IDC_JOIN_ON_TOP                 1023
+#define IDC_BROWSE_MD_FS                1023
 #define IDC_BUTTON10                    1024
 #define IDC_CLOSED                      1024
+#define IDC_BUTTON_BS_RESET             1024
 #define IDC_BUTTON11                    1025
 #define IDC_APPLY                       1025
 #define IDC_STRETCH                     1025
 #define IDC_STRETCH_X                   1025
 #define IDC_EDIT4                       1025
 #define IDC_STRETCH_U                   1025
+#define IDC_BUTTON_MS_RESET             1025
 #define IDC_BUTTON12                    1026
 #define IDC_RENDERING_PREFS01           1026
 #define IDC_STRETCH_Y                   1026
@@ -594,10 +587,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define IDC_REMOVE_TEXTURE              1145
 #define IDC_STATIC_OFFSET               1146
 #define IDC_PREVIEW_FRAME               1147
+#define IDC_RADIO_TEXTURE_SPEC          1148
 #define IDC_DISPLACE_FILE               1149
 #define IDC_TEXTURE_DIM_T               1149
 #define IDC_DISPLACE_T                  1150
+#define IDC_RADIO_TEXTURE_NORM          1150
 #define IDC_ANGLE3D_T                   1151
+#define IDC_RADIO_TEXTURE_HEIGHT        1151
 #define ID_CENTER                       1153
 #define ID_DELETE_BROWSE_BY_CLASS       1153
 #define IDC_STATIC_SHADOW_COLOR         1154
@@ -755,6 +751,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define IDC_CT_OCTAVES_SPIN             1262
 #define IDC_GLOBAL_PRETENDER            1263
 #define IDC_BCG_PICTURE_SIZE            1264
+#define IDC_BR_VS_TEXT                  1264
+#define IDC_BR_GS_TEXT                  1265
+#define IDC_BR_FS_TEXT                  1266
+#define IDC_MD_VS_TEXT                  1267
+#define IDC_MD_GS_TEXT                  1268
+#define IDC_MD_FS_TEXT                  1269
 #define IDC_FBM_PREVIEW_FRAME           1284
 #define IDC_IS_LIGHT_BEAM_PASSABLLE     11048
 #define IDC_NO_SHADOW                   11049
@@ -1327,9 +1329,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        255
+#define _APS_NEXT_RESOURCE_VALUE        257
 #define _APS_NEXT_COMMAND_VALUE         33391
-#define _APS_NEXT_CONTROL_VALUE         1264
+#define _APS_NEXT_CONTROL_VALUE         1267
 #define _APS_NEXT_SYMED_VALUE           111
 #endif
 #endif

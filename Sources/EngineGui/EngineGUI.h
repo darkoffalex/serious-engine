@@ -54,6 +54,8 @@ public:
 #define KEY_NAME_BACKGROUND_TEXTURE_DIR "Background texture directory"
 #define KEY_NAME_REPLACE_TEXTURE_DIR "Replace texture directory"
 #define KEY_NAME_SCREEN_SHOT_DIR "Screen shots directory"
+#define KEY_NAME_BRUSH_SHADER_DIR "Brush shader directory"
+#define KEY_NAME_MODEL_SHADER_DIR "Model shader directory"
 
 /* Predefined file filters for file requester */
 #define FILTER_ALL            "All files (*.*)\0*.*\0"
@@ -75,6 +77,7 @@ public:
 #define FILTER_LST            "List files (*.lst)\0*.lst\0"
 #define FILTER_TGA            "TGA files (*.tga)\0*.tga\0"
 #define FILTER_SMC            "SMC files (*.smc)\0*.smc\0"
+#define FILTER_SHA            "Shader GLSL files (*.vs;*.gs;*.fs;*.glsl)\0*.vs;*.gs;*.fs;*.glsl\0"
 #define FILTER_END            "\0"
   /* File requester with thumbnail display */
   ENGINEGUI_API CTFileName FileRequester( char *pchrTitle="Choose file",

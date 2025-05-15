@@ -88,6 +88,9 @@ protected:
 	afx_msg void OnTexture2();
 	afx_msg void OnTexture3();
 	afx_msg void OnRemoveTexture();
+	afx_msg void OnBnClickedRadioTextureSpec();
+	afx_msg void OnBnClickedRadioTextureNorm();
+	afx_msg void OnBnClickedRadioTextureHeight();
 	afx_msg void OnSelchangeScrollCombo();
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDropFiles(HDROP hDropInfo);

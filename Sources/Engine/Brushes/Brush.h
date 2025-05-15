@@ -391,7 +391,7 @@ public:
   CStaticArray<CBrushPolygonEdge> bpo_abpePolygonEdges;   // edges in this polygon
   CStaticArray<CBrushVertex *> bpo_apbvxTriangleVertices; // triangle vertices
   CStaticArray<INDEX> bpo_aiTriangleElements; // element indices inside vertex arrays
-  CBrushPolygonTexture bpo_abptTextures[3];   // texture on this polygon
+  CBrushPolygonTexture bpo_abptTextures[6];   // texture on this polygon
   COLOR bpo_colColor;                         // color of this polygon
   ULONG bpo_ulFlags;                          // flags
   COLOR bpo_colShadow;                        // color of shadow on this polygon

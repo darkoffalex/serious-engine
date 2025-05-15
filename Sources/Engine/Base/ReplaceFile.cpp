@@ -273,6 +273,14 @@ void ReadModelObject_t(CTStream &strm, CModelObject &mo)
     ReadTextureObject_t(strm, mo.mo_toTexture);
   }
 
+  // if model obect has additional textures
+  if (strm.PeekID_t() == CChunkID("ATEX")) {
+      // read all textures
+      strm.ExpectID_t("ATEX");
+      ReadTextureObject_t(strm, mo.mo_toHeight);
+      ReadTextureObject_t(strm, mo.mo_toEmission);
+  }
+
   // if model object has attachments
   if (strm.PeekID_t() == CChunkID("ATCH")) { // 'attachments'
     // read attachments header
@@ -359,6 +367,11 @@ void WriteModelObject_t(CTStream &strm, CModelObject &mo)
   WriteTextureObject_t(strm, mo.mo_toBump);
   WriteTextureObject_t(strm, mo.mo_toReflection);
   WriteTextureObject_t(strm, mo.mo_toSpecular);
+
+  // write additional textures
+  strm.WriteID_t("ATEX");
+  WriteTextureObject_t(strm, mo.mo_toHeight);
+  WriteTextureObject_t(strm, mo.mo_toEmission);
 
   // if model object has attachments
   if (!mo.mo_lhAttachments.IsEmpty()) {

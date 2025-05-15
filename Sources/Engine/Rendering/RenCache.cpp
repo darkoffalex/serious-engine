@@ -1,4 +1,5 @@
-/* Copyright (c) 2002-2012 Croteam Ltd. 
+#include "Render_internal.h"
+/* Copyright (c) 2002-2012 Croteam Ltd.
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as published by
 the Free Software Foundation
@@ -531,7 +532,7 @@ void CRenderer::SetOneTextureParameters(CBrushPolygon &bpo, ScenePolygon &spo, I
   // set texture blending flags
   ASSERT( BPTF_CLAMPU==STXF_CLAMPU && BPTF_CLAMPV==STXF_CLAMPV && BPTF_AFTERSHADOW==STXF_AFTERSHADOW);
   spo.spo_aubTextureFlags[iLayer] = 
-     (bpo.bpo_abptTextures[iLayer].s.bpt_ubFlags & (BPTF_CLAMPU|BPTF_CLAMPV|BPTF_AFTERSHADOW))
+   (bpo.bpo_abptTextures[iLayer].s.bpt_ubFlags & (BPTF_CLAMPU|BPTF_CLAMPV|BPTF_AFTERSHADOW))
    | (tb.tb_ubBlendingType);
   if( bpo.bpo_abptTextures[iLayer].s.bpt_ubFlags & BPTF_REFLECTION) spo.spo_aubTextureFlags[iLayer] |= STXF_REFLECTION;
 
@@ -575,6 +576,64 @@ void CRenderer::SetOneTextureParameters(CBrushPolygon &bpo, ScenePolygon &spo, I
     mdBase.MakeMappingVectors( wpl.wpl_mvView, mvTmp);
     mdScroll.TransformMappingVectors( mvTmp, spo.spo_amvMapping[iLayer]);
   }
+}
+
+inline void CRenderer::SetOneMaterialTextureParameters(CBrushPolygon& bpo, ScenePolygon& spo, INDEX iLayer)
+{
+    spo.spo_aptoTexturesMtl[iLayer] = NULL;
+    CTextureData* ptd = (CTextureData*)bpo.bpo_abptTextures[3 + iLayer].bpt_toTexture.GetData();
+
+    // if there is no texture or it should not be shown
+    if (ptd == NULL || !_wrpWorldRenderPrefs.wrp_abTextureLayers[iLayer]) {
+        // do nothing
+        return;
+    }
+
+    // set texture and its parameters
+    CWorkingPlane& wpl = *bpo.bpo_pbplPlane->bpl_pwplWorking;
+    spo.spo_aptoTexturesMtl[iLayer] = &bpo.bpo_abptTextures[3 + iLayer].bpt_toTexture;
+    spo.spo_acolColorsMtl[iLayer] = bpo.bpo_abptTextures[3 + iLayer].s.bpt_colColor;
+
+    // pass clamp flags
+    spo.spo_aubTextureFlagsMtl[iLayer] = (bpo.bpo_abptTextures[3 + iLayer].s.bpt_ubFlags & (BPTF_CLAMPU | BPTF_CLAMPV));
+
+    // if texture should be not transformed
+    INDEX iTransformation = bpo.bpo_abptTextures[3 + iLayer].s.bpt_ubScroll;
+    if (iTransformation == 0)
+    {
+        // if texture is wrapped on both axes
+        if ((bpo.bpo_abptTextures[3 + iLayer].s.bpt_ubFlags & (BPTF_CLAMPU | BPTF_CLAMPV)) == 0)
+        { // make a mapping adjusted for texture wrapping
+            const MEX mexMaskU = ptd->GetWidth() - 1;
+            const MEX mexMaskV = ptd->GetHeight() - 1;
+            CMappingDefinition mdTmp = bpo.bpo_abptTextures[3 + iLayer].bpt_mdMapping;
+            mdTmp.md_fUOffset = (FloatToInt(mdTmp.md_fUOffset * 1024.0f) & mexMaskU) / 1024.0f;
+            mdTmp.md_fVOffset = (FloatToInt(mdTmp.md_fVOffset * 1024.0f) & mexMaskV) / 1024.0f;
+            const FLOAT3D vOffset = wpl.wpl_plView.ReferencePoint() - wpl.wpl_mvView.mv_vO;
+            const FLOAT fS = vOffset % wpl.wpl_mvView.mv_vU;
+            const FLOAT fT = vOffset % wpl.wpl_mvView.mv_vV;
+            const FLOAT fU = fS * mdTmp.md_fUoS + fT * mdTmp.md_fUoT + mdTmp.md_fUOffset;
+            const FLOAT fV = fS * mdTmp.md_fVoS + fT * mdTmp.md_fVoT + mdTmp.md_fVOffset;
+            mdTmp.md_fUOffset += (FloatToInt(fU * 1024.0f) & ~mexMaskU) / 1024.0f;
+            mdTmp.md_fVOffset += (FloatToInt(fV * 1024.0f) & ~mexMaskV) / 1024.0f;
+            // make texture mapping vectors from default vectors of the plane
+            mdTmp.MakeMappingVectors(wpl.wpl_mvView, spo.spo_amvMappingMtl[iLayer]);
+        }
+        // if texture is clamped
+        else {
+            // just make texture mapping vectors from default vectors of the plane
+            bpo.bpo_abptTextures[3 + iLayer].bpt_mdMapping.MakeMappingVectors(wpl.wpl_mvView, spo.spo_amvMappingMtl[iLayer]);
+        }
+    }
+    // if texture should be transformed
+    else {
+        // make mapping vectors as normal and then transform them
+        CMappingDefinition& mdBase = bpo.bpo_abptTextures[iLayer].bpt_mdMapping;
+        CMappingDefinition& mdScroll = re_pwoWorld->wo_attTextureTransformations[iTransformation].tt_mdTransformation;
+        CMappingVectors mvTmp;
+        mdBase.MakeMappingVectors(wpl.wpl_mvView, mvTmp);
+        mdScroll.TransformMappingVectors(mvTmp, spo.spo_amvMappingMtl[iLayer]);
+    }
 }
 
 /*
@@ -646,12 +705,20 @@ CScreenPolygon *CRenderer::MakeScreenPolygon(CBrushPolygon &bpo)
   SetOneTextureParameters( bpo, sppo, 1);
   SetOneTextureParameters( bpo, sppo, 2);
 
+  // set material textures for the polygon (shader pipeline)
+  SetOneMaterialTextureParameters(bpo, sppo, 0);
+  SetOneMaterialTextureParameters(bpo, sppo, 1);
+  SetOneMaterialTextureParameters(bpo, sppo, 2);
+
   // clear polygon flags
   sppo.spo_ulFlags = 0;
   if (_wrpWorldRenderPrefs.wrp_ftPolygons != CWorldRenderPrefs::FT_TEXTURE) {
     sppo.spo_aptoTextures[0] = NULL;
     sppo.spo_aptoTextures[1] = NULL;
     sppo.spo_aptoTextures[2] = NULL;
+    sppo.spo_aptoTexturesMtl[0] = NULL;
+    sppo.spo_aptoTexturesMtl[1] = NULL;
+    sppo.spo_aptoTexturesMtl[2] = NULL;
   }
 
   // if the sector has fog

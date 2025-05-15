@@ -1170,3 +1170,259 @@ static void ogl_LockArrays(void)
   OGL_CHECKERROR;
  _bCVAReallyLocked = TRUE;
 }
+
+/* SHADERS */
+
+// Create shader
+static UINT ogl_CreateShader(UINT shaderType) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    GLuint shader = pglCreateShader((GLenum)shaderType);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+    return shader;
+}
+
+// Delete a shader
+static void ogl_DeleteShader(UINT shader) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglDeleteShader((GLuint)shader);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Specify the source code for a shader
+static void ogl_ShaderSource(UINT shader, INT32 count, const CHAR** string, const INT32* length) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglShaderSource((GLuint)shader, (GLsizei)count, (const GLchar**)string, (const GLint*)length);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Compile a shader
+static void ogl_CompileShader(UINT shader) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglCompileShader((GLuint)shader);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Get shader parameter (e.g., compile status)
+static void ogl_GetShaderiv(UINT shader, UINT pname, INT32* params) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglGetShaderiv((GLuint)shader, (GLenum)pname, (GLint*)params);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Get shader info log (e.g., compilation errors)
+static void ogl_GetShaderInfoLog(UINT shader, INT32 maxLength, INT32* length, CHAR* infoLog) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglGetShaderInfoLog((GLuint)shader, (GLsizei)maxLength, (GLsizei*)length, (GLchar*)infoLog);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Create a shader program
+static UINT ogl_CreateProgram(void) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    GLuint program = pglCreateProgram();
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+    return program;
+}
+
+// Delete a shader program
+static void ogl_DeleteProgram(UINT program) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglDeleteProgram((GLuint)program);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Attach a shader to a program
+static void ogl_AttachShader(UINT program, UINT shader) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglAttachShader((GLuint)program, (GLuint)shader);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Link a shader program
+static void ogl_LinkProgram(UINT program) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglLinkProgram((GLuint)program);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Use a shader program
+static void ogl_UseProgram(UINT program) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUseProgram((GLuint)program);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Get program parameter (e.g., link status)
+static void ogl_GetProgramiv(UINT program, UINT pname, INT32* params) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglGetProgramiv((GLuint)program, (GLenum)pname, (GLint*)params);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Get program info log (e.g., linking errors)
+static void ogl_GetProgramInfoLog(UINT program, INT32 maxLength, INT32* length, CHAR* infoLog) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglGetProgramInfoLog((GLuint)program, (GLsizei)maxLength, (GLsizei*)length, (GLchar*)infoLog);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Get uniform location in a program
+static INT32 ogl_GetUniformLocation(UINT program, const CHAR* name) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    GLint location = pglGetUniformLocation((GLuint)program, (const GLchar*)name);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+    return location;
+}
+
+// Set a 4x4 matrix uniform
+static void ogl_UniformMatrix4fv(INT32 location, INT32 count, BOOL transpose, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniformMatrix4fv((GLint)location, (GLsizei)count, (GLboolean)transpose, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an integer uniform
+static void ogl_Uniform1i(INT32 location, INT32 v0) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform1i((GLint)location, (GLint)v0);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of integers
+static void ogl_Uniform1iv(INT32 location, INT32 count, const INT32 * value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform1iv((GLint)location, (GLsizei)count, (const GLint*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of floats
+static void ogl_Uniform1fv(INT32 location, INT32 count, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform1fv((GLint)location, (GLsizei)count, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of vec2
+static void ogl_Uniform2fv(INT32 location, INT32 count, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform2fv((GLint)location, (GLsizei)count, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of vec3
+static void ogl_Uniform3fv(INT32 location, INT32 count, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform3fv((GLint)location, (GLsizei)count, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of vec4
+static void ogl_Uniform4fv(INT32 location, INT32 count, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniform4fv((GLint)location, (GLsizei)count, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Set an array of 3x3 matrices
+static void ogl_UniformMatrix3fv(INT32 location, INT32 count, BOOL transpose, const FLOAT* value) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglUniformMatrix3fv((GLint)location, (GLsizei)count, (GLboolean)transpose, (const GLfloat*)value);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Generate buffers
+static void ogl_GenBuffers(INT32 n, UINT* buffers) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglGenBuffers((GLsizei)n, (GLuint*)buffers);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Bind a buffer
+static void ogl_BindBuffer(UINT target, UINT buffer) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglBindBuffer((GLenum)target, (GLuint)buffer);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Specify buffer data
+static void ogl_BufferData(UINT target, SLONG size, const void* data, UINT usage) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglBufferData((GLenum)target, (GLsizeiptr)size, data, (GLenum)usage);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+static void ogl_BufferSubData(UINT target, SLONG offset, SLONG size, const void* data) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglBufferSubData((GLenum)target, (GLintptr)offset, (GLsizeiptr)size, data);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Bind a buffer to an indexed target
+static void ogl_BindBufferBase(UINT target, UINT index, UINT buffer) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglBindBufferBase((GLenum)target, (GLuint)index, (GLuint)buffer);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}
+
+// Delete buffers
+static void ogl_DeleteBuffers(INT32 n, const UINT* buffers) {
+    ASSERT(_pGfx->gl_eCurrentAPI == GAT_OGL);
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+    pglDeleteBuffers((GLsizei)n, (const GLuint*)buffers);
+    OGL_CHECKERROR;
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+}

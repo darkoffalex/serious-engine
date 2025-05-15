@@ -132,6 +132,27 @@ typedef ULONG   COLOR;  // color is always in 32 bit true-color format
                            ((clrref & 0x0000ff00) <<  8) | \
                            ((clrref & 0x00ff0000) >>  8))
 
+// macros for true color conversion into float3/4 vetors (0..1 range)
+#define COLOR_TO_FLOAT3D(clr) FLOAT3D( \
+    ((clr & 0x00FF0000) >> 16) / 255.0f, /* Red */ \
+    ((clr & 0x0000FF00) >> 8) / 255.0f,  /* Green */ \
+    ((clr & 0x000000FF) >> 0) / 255.0f   /* Blue */ \
+)
+
+#define COLOR_TO_FLOAT4D(clr) FLOAT4D( \
+    ((clr & 0x00FF0000) >> 16) / 255.0f, /* Red */ \
+    ((clr & 0x0000FF00) >> 8) / 255.0f,  /* Green */ \
+    ((clr & 0x000000FF) >> 0) / 255.0f,  /* Blue */ \
+    ((clr & 0xFF000000) >> 24) / 255.0f  /* Alpha */ \
+)
+
+// max lights per brush polygon group (for shader purposes only)
+#define MAX_BRUSH_LIGHTS 32
+// max lights per rendered model (for shader purposes only)
+#define MAX_MODEL_LIGHTS 8
+// max lights prepared in sorted multiset for one model
+#define MAX_MODEL_LIGHTS_PREP 16
+
 // z-buffer depth constants
 #define ZBUF_FRONT  (0.0f)
 #define ZBUF_BACK   (1.0f)
@@ -356,6 +377,7 @@ typedef Vector<PIX, 3>          PIX3D;
 typedef Vector<ANGLE, 3>        ANGLE3D;
 typedef Vector<FLOAT, 2>        FLOAT2D;
 typedef Vector<FLOAT, 3>        FLOAT3D;
+typedef Vector<FLOAT, 4>        FLOAT4D;
 typedef Vector<DOUBLE, 2>       DOUBLE2D;
 typedef Vector<DOUBLE, 3>       DOUBLE3D;
 

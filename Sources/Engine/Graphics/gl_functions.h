@@ -119,8 +119,6 @@ DLLFUNCTION( OGL, void , glFlush,( void ),0,0);
 
 DLLFUNCTION( OGL, void , glHint,( GLenum target, GLenum mode ),0,0);
 
-
-
 /*
  * Depth Buffer
  */

@@ -136,6 +136,35 @@ extern void (*gfxEnableTruform)( void) = NULL;
 extern void (*gfxDisableTruform)(void) = NULL;
 extern void (*gfxSetColorMask)( ULONG ulColorMask) = NULL; 
 
+// SHADERS
+extern UINT (*gfxCreateShader)(UINT shaderType) = NULL;
+extern void (*gfxDeleteShader)(UINT shader) = NULL;
+extern void (*gfxShaderSource)(UINT shader, INT32 count, const CHAR** string, const INT32* length) = NULL;
+extern void (*gfxCompileShader)(UINT shader) = NULL;
+extern void (*gfxGetShaderiv)(UINT shader, UINT pname, INT32* params) = NULL;
+extern void (*gfxGetShaderInfoLog)(UINT shader, INT32 maxLength, INT32* length, CHAR* infoLog) = NULL;
+extern UINT (*gfxCreateProgram)(void) = NULL;
+extern void (*gfxDeleteProgram)(UINT program) = NULL;
+extern void (*gfxAttachShader)(UINT program, UINT shader) = NULL;
+extern void (*gfxLinkProgram)(UINT program) = NULL;
+extern void (*gfxUseProgram)(UINT program) = NULL;
+extern void (*gfxGetProgramiv)(UINT program, UINT pname, INT32* params) = NULL;
+extern void (*gfxGetProgramInfoLog)(UINT program, INT32 maxLength, INT32* length, CHAR* infoLog) = NULL;
+extern INT32(*gfxGetUniformLocation)(UINT program, const CHAR* name) = NULL;
+extern void (*gfxUniformMatrix4fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value) = NULL;
+extern void (*gfxUniform1i)(INT32 location, INT32 v0) = NULL;
+extern void (*gfxUniform1iv)(INT32 location, INT32 count, const INT32* value) = NULL;
+extern void (*gfxUniform1fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
+extern void (*gfxUniform2fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
+extern void (*gfxUniform3fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
+extern void (*gfxUniform4fv)(INT32 location, INT32 count, const FLOAT* value) = NULL;
+extern void (*gfxUniformMatrix3fv)(INT32 location, INT32 count, BOOL transpose, const FLOAT* value) = NULL;
+extern void (*gfxGenBuffers)(INT32 n, UINT* buffers) = NULL;
+extern void (*gfxBindBuffer)(UINT target, UINT buffer) = NULL;
+extern void (*gfxBufferData)(UINT target, SLONG size, const void* data, UINT usage) = NULL;
+extern void (*gfxBufferSubData)(UINT target, SLONG offset, SLONG size, const void* data) = NULL;
+extern void (*gfxBindBufferBase)(UINT target, UINT index, UINT buffer) = NULL;
+extern void (*gfxDeleteBuffers)(INT32 n, const UINT* buffers) = NULL;
 
 
 // dummy function (one size fits all:)
@@ -779,6 +808,36 @@ extern void GFX_SetFunctionPointers( INDEX iAPI)
     gfxFinish               = &ogl_Finish;              
     gfxLockArrays           = &ogl_LockArrays;          
     gfxSetColorMask         = &ogl_SetColorMask;
+
+    // Shaders
+    gfxCreateShader         = &ogl_CreateShader;
+    gfxDeleteShader         = &ogl_DeleteShader;
+    gfxShaderSource         = &ogl_ShaderSource;
+    gfxCompileShader        = &ogl_CompileShader;
+    gfxGetShaderiv          = &ogl_GetShaderiv;
+    gfxGetShaderInfoLog     = &ogl_GetShaderInfoLog;
+    gfxCreateProgram        = &ogl_CreateProgram;
+    gfxDeleteProgram        = &ogl_DeleteProgram;
+    gfxAttachShader         = &ogl_AttachShader;
+    gfxLinkProgram          = &ogl_LinkProgram;
+    gfxUseProgram           = &ogl_UseProgram;
+    gfxGetProgramiv         = &ogl_GetProgramiv;
+    gfxGetProgramInfoLog    = &ogl_GetProgramInfoLog;
+    gfxGetUniformLocation   = &ogl_GetUniformLocation;
+    gfxUniformMatrix4fv     = &ogl_UniformMatrix4fv;
+    gfxUniform1i            = &ogl_Uniform1i;
+    gfxUniform1iv           = &ogl_Uniform1iv;
+    gfxUniform1fv           = &ogl_Uniform1fv;
+    gfxUniform2fv           = &ogl_Uniform2fv;
+    gfxUniform3fv           = &ogl_Uniform3fv;
+    gfxUniform4fv           = &ogl_Uniform4fv;
+    gfxUniformMatrix3fv     = &ogl_UniformMatrix3fv;
+    gfxGenBuffers           = &ogl_GenBuffers;
+    gfxBindBuffer           = &ogl_BindBuffer;
+    gfxBufferData           = &ogl_BufferData;
+    gfxBufferSubData        = &ogl_BufferSubData;
+    gfxBindBufferBase       = &ogl_BindBufferBase;
+    gfxDeleteBuffers        = &ogl_DeleteBuffers;
   }
   // Direct3D?
 #ifdef SE1_D3D

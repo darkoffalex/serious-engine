@@ -60,7 +60,7 @@
     <IntDir>Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <ExecutablePath>$(SolutionDir)..\Bin;$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(SolutionDir);$(SolutionDir)EntitiesMP;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)EntitiesMP;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(SolutionDir)EntitiesMP\StdH;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\Bin;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>

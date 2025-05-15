@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "stdh.h"
 
 #include <Engine/Base/Stream.h>
+#include <Engine/Base/Utils.h>
 #include <Engine/Math/Float.h>
 #include <Engine/World/World.h>
 #include <Engine/World/WorldEditingProfile.h>
@@ -29,6 +30,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Network/Network.h>
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Terrain/Terrain.h>
+#include <Engine/Graphics/GfxShader.h>
+#include <Engine/Graphics/GfxUniformBuffer.h>
 
 #define WORLDSTATEVERSION_NOCLASSCONTAINER 9
 #define WORLDSTATEVERSION_MULTITEXTURING 8
@@ -818,6 +821,19 @@ void CWorld::ReadInfo_t(CTStream *strm, BOOL bMaybeDescription) // throw char *
     // read the world description
     (*strm)>>wo_strDescription;
 
+    // shader file paths chunk
+    if (strm->PeekID_t() == CChunkID("SHAD")) 
+    {
+        strm->ExpectID_t(CChunkID("SHAD"));
+        (*strm) >> wo_sBrushShaderInfo.gsi_fnmVsSource;
+        (*strm) >> wo_sBrushShaderInfo.gsi_fnmGsSource;
+        (*strm) >> wo_sBrushShaderInfo.gsi_fnmFsSource;
+
+        (*strm) >> wo_sModelShaderInfo.gsi_fnmVsSource;
+        (*strm) >> wo_sModelShaderInfo.gsi_fnmGsSource;
+        (*strm) >> wo_sModelShaderInfo.gsi_fnmFsSource;
+    }
+
   // if version with description only
   } else if (bMaybeDescription) {
     // read the world description
@@ -835,4 +851,14 @@ void CWorld::WriteInfo_t(CTStream *strm) // throw char *
   (*strm)<<wo_ulSpawnFlags;
   // write the world description
   (*strm)<<wo_strDescription;
+
+  // shader paths
+  strm->WriteID_t(CChunkID("SHAD"));
+  (*strm) << wo_sBrushShaderInfo.gsi_fnmVsSource;
+  (*strm) << wo_sBrushShaderInfo.gsi_fnmGsSource;
+  (*strm) << wo_sBrushShaderInfo.gsi_fnmFsSource;
+
+  (*strm) << wo_sModelShaderInfo.gsi_fnmVsSource;
+  (*strm) << wo_sModelShaderInfo.gsi_fnmGsSource;
+  (*strm) << wo_sModelShaderInfo.gsi_fnmFsSource;
 }

@@ -148,6 +148,14 @@ __forceinline COLOR RGBAToColor( UBYTE const ubR, UBYTE const ubG, UBYTE const u
   return ((ULONG)ubR<<CT_RSHIFT) | ((ULONG)ubG<<CT_GSHIFT)
        | ((ULONG)ubB<<CT_BSHIFT) | ((ULONG)ubA<<CT_ASHIFT);
 }
+// converts RGBA float vector to CroTeam COLOR format
+__forceinline COLOR RGBAFloatToColor(FLOAT fR, FLOAT fG, FLOAT fB, FLOAT fA) {
+    UBYTE ubR = (UBYTE)(fR * 255.0f);
+    UBYTE ubG = (UBYTE)(fG * 255.0f);
+    UBYTE ubB = (UBYTE)(fB * 255.0f);
+    UBYTE ubA = (UBYTE)(fA * 255.0f);
+    return RGBAToColor(ubR, ubG, ubB, ubA);
+}
 // separate CroTeam COLOR format to R,G and B color components
 __forceinline void ColorToRGBA( COLOR const col, UBYTE &ubR, UBYTE &ubG, UBYTE &ubB, UBYTE &ubA) {
   ubR = (col&CT_RMASK)>>CT_RSHIFT;

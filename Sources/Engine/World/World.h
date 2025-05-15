@@ -34,6 +34,8 @@ class CSurfaceType;
 class CContentType;
 class CEnvironmentType;
 class CIlluminationType;
+class CGfxShader;
+class CGfxUniformBuffer;
 
 // mirroring types for mirror and stretch
 enum WorldMirrorType {
@@ -41,6 +43,105 @@ enum WorldMirrorType {
   WMT_X,
   WMT_Y,
   WMT_Z,
+};
+
+enum WorldShaderLightType : UINT {
+    WSLT_POINT = 0,
+    WSLT_AMBIENT,
+    WSLT_DIRECTIONAL,
+    WSLT_SPOT
+};
+
+// Shader uniform IDs for brushes
+struct SBrushShaderUniforms
+{
+    INT32 wsu_iTexLayer0;
+    INT32 wsu_iTexLayer1;
+    INT32 wsu_iTexLayer2;
+    INT32 wsu_iTexShadow;
+    INT32 wsu_iTexSpec;
+    INT32 wsu_iTexNormal;
+    INT32 wsu_iTexHeight;
+    INT32 wsu_iLayersBlending;
+    INT32 wsu_iActiveLayers;
+    INT32 wsu_iUseShadow;
+    INT32 wsu_iMaterialUsage;
+    INT32 wsu_iActiveLights;
+    INT32 wsu_iUseLights;
+    INT32 wsu_iHeightScale;
+};
+
+// Shader uniform IDs for models
+struct SModelShaderUniforms
+{
+    INT32 wsu_iTexColor;
+    INT32 wsu_iTexSpec;
+    INT32 wsu_iTexNormal;
+    INT32 wsu_iTexHeight;
+    INT32 wsu_iTexReflection;
+    INT32 wsu_iTexEmission;
+    INT32 wsu_iMaterialUsage;
+    INT32 wsu_iActiveLights;
+    INT32 wsu_iUseLights;
+    INT32 wsu_iEmissionColor;
+    INT32 wsu_iEmissionPower;
+    INT32 wsu_iHeightScale;
+};
+
+// Light-source shader UBO entry
+struct SShaderLight
+{
+    FLOAT3D wsl_vPosition;    // 12 bytes + 4 bytes padding = 16 bytes
+    FLOAT   _pad0;            // 4 bytes padding
+    FLOAT3D wsl_vDirection;   // 12 bytes + 4 bytes padding = 16 bytes
+    FLOAT   _pad1;            // 4 bytes padding
+    FLOAT3D wsl_vColor;       // 12 bytes + 4 bytes padding = 16 bytes
+    FLOAT   _pad2;            // 4 bytes padding
+    FLOAT3D wsl_vColorAmbient;// 12 bytes + 4 bytes padding = 16 bytes
+    FLOAT   _pad3;            // 4 bytes padding
+    FLOAT   wsl_fFallOff;     // 4 bytes
+    FLOAT   wsl_fHotSpot;     // 4 bytes
+    FLOAT   wsl_fCutOffMin;   // 4 bytes
+    FLOAT   wsl_fCutOffMax;   // 4 bytes
+    UINT    wsl_uType;        // 4 bytes
+
+    // Explicit paddig for array align (96 bytes)
+    FLOAT   _padEnd[3];       // 12 bytes (3 * 4)
+};
+
+struct SGfxShaderInfo
+{
+    enum EUniformTypes : INDEX
+    {
+        SUT_NONE = 0,
+        SUT_BRUSH,
+        SUT_MODELS,
+        SUT_POST_PROCESS,
+    };
+
+    // Load status
+    EUniformTypes gsi_eType = SUT_NONE;
+    BOOL  gsi_bLoaded = FALSE;
+    BOOL  gsi_bLoadAttempted = FALSE;
+
+    // Shader source files
+    CTFileName gsi_fnmVsSource = CTFileName(CTString(""));
+    CTFileName gsi_fnmGsSource = CTFileName(CTString(""));
+    CTFileName gsi_fnmFsSource = CTFileName(CTString(""));
+
+    // Shader program & shader UBO objects (for rendering purposes)
+    CGfxShader* gsi_pShader = nullptr;
+    CGfxUniformBuffer* gsi_pShaderUboLights = nullptr;
+
+    // Owner world object
+    CWorld* gsi_pWorld = nullptr;
+
+    // Uniform locations
+    SBrushShaderUniforms gsi_sBrushUniforms;
+    SModelShaderUniforms gsi_sModelUniforms;
+
+    void TryLoadOnce(EUniformTypes eUniformType, BOOL bForce = false);
+    void Unload();
 };
 
 class ENGINE_API CWorld {
@@ -56,7 +157,7 @@ public:
   CStaticArray<CContentType> wo_actContentTypes;
   // sector environment types
   CStaticArray<CEnvironmentType> wo_aetEnvironmentTypes;
-    // illumination types (0 is not used)
+  // illumination types (0 is not used)
   CStaticArray<CIlluminationType> wo_aitIlluminationTypes;
 
   CEntityClass *wo_pecWorldBaseClass;   // world base class (used for some special features)
@@ -97,6 +198,9 @@ public:
   CListHead wo_lhTimers;      // timer scheduled entities
   CListHead wo_lhMovers;        // entities that want to/have to move
   BOOL wo_bPortalLinksUpToDate; // set if portal-sector links are up to date
+
+  SGfxShaderInfo wo_sBrushShaderInfo;
+  SGfxShaderInfo wo_sModelShaderInfo;
 
   /* Initialize collision grid. */
   void InitCollisionGrid(void);

@@ -157,9 +157,20 @@ struct ModelLight {
   FLOAT3D ml_vDirection;      // direction from light to the model position (normalized)
   FLOAT ml_fShadowIntensity;  // intensity at the model position (for shadow)
   FLOAT ml_fR, ml_fG, ml_fB;  // light components at light source (0..255)
+  FLOAT ml_fDistance;         // distance from light to the model position
   inline void Clear(void) {};
 };
+
+// comparator for distance-sorted multiset
+struct ModelLightDistanceCmp
+{
+    bool operator()(const ModelLight& a, const ModelLight& b) const {
+        return a.ml_fDistance < b.ml_fDistance;
+    }
+};
+
 static CDynamicStackArray<struct ModelLight> _amlLights;
+static std::multiset<ModelLight, ModelLightDistanceCmp> _amLightsMSet;
 
 static INDEX _ctMaxAddEdges=0;
 static INDEX _ctMaxActiveEdges=0;
@@ -584,7 +595,7 @@ void CRenderer::DrawToScreen(void)
     re_prProjection->Prepare();
     _pfRenderProfile.StartTimer(CRenderProfile::PTI_RENDERSCENE);
     CPerspectiveProjection3D *pprPerspective = (CPerspectiveProjection3D*)(CProjection3D*)re_prProjection;
-    RenderScene( re_pdpDrawPort, re_pspoFirst, re_prProjection, re_colSelection, FALSE);
+    RenderScene( re_pdpDrawPort, re_pspoFirst, re_prProjection, re_colSelection, FALSE, re_pwoWorld);
     _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
   }
 
@@ -621,7 +632,7 @@ void CRenderer::DrawToScreen(void)
     CPerspectiveProjection3D *pprPerspective = (CPerspectiveProjection3D*)(CProjection3D*)re_prProjection;
     pprPerspective->Prepare();
     RenderScene( re_pdpDrawPort, SortTranslucentPolygons(re_pspoFirstTranslucent),
-                 re_prProjection, re_colSelection, TRUE);
+                 re_prProjection, re_colSelection, TRUE, re_pwoWorld);
     _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
   }
 
@@ -948,6 +959,10 @@ void CRenderer::InitClippingRectangle(PIX pixMinI, PIX pixMinJ, PIX pixSizeI, PI
 void RenderView(CWorld &woWorld, CEntity &enViewer,
   CAnyProjection3D &prProjection, CDrawPort &dpDrawport)
 {
+  // load world's brush & model shaders if not loaded yet (once, beefore render)
+  woWorld.wo_sBrushShaderInfo.TryLoadOnce(SGfxShaderInfo::EUniformTypes::SUT_BRUSH, false);
+  woWorld.wo_sModelShaderInfo.TryLoadOnce(SGfxShaderInfo::EUniformTypes::SUT_MODELS, false);
+  
   // let the worldbase execute its render function
   if (woWorld.wo_pecWorldBaseClass!=NULL
     &&woWorld.wo_pecWorldBaseClass->ec_pdecDLLClass!=NULL

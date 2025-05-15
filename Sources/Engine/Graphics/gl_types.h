@@ -1000,7 +1000,20 @@ typedef enum {
 	GL_TEXTURE_MIN_LOD			= 0x813A,
 	GL_TEXTURE_MAX_LOD			= 0x813B,
 	GL_TEXTURE_BASE_LEVEL			= 0x813C,
-	GL_TEXTURE_MAX_LEVEL			= 0x813D
+	GL_TEXTURE_MAX_LEVEL			= 0x813D,
+
+	/* Shaders */
+	GL_COMPILE_STATUS       = 0x8B81,
+	GL_LINK_STATUS          = 0x8B82,
+	GL_VERTEX_SHADER        = 0x8B31,
+	GL_FRAGMENT_SHADER      = 0x8B30,
+	GL_GEOMETRY_SHADER      = 0x8DD9,
+	GL_INFO_LOG_LENGTH      = 0x8B84,
+	GL_UNIFORM_BUFFER       = 0x8A11,
+	GL_STREAM_DRAW          = 0x88E0,
+	GL_STATIC_DRAW          = 0x88E4,
+	GL_DYNAMIC_DRAW         = 0x88E8
+
 } GLenum;
 
 
@@ -1049,22 +1062,28 @@ typedef unsigned int GLbitfield;
 
 /*  C type		GL type		storage                            */
 /*-------------------------------------------------------------------------*/
-typedef void		GLvoid;
-typedef unsigned char	GLboolean;
-typedef signed char	GLbyte;		/* 1-byte signed */
-typedef short		GLshort;	/* 2-byte signed */
-typedef int		GLint;		/* 4-byte signed */
-typedef unsigned char	GLubyte;	/* 1-byte unsigned */
-typedef unsigned short	GLushort;	/* 2-byte unsigned */
-typedef unsigned int	GLuint;		/* 4-byte unsigned */
-typedef int		GLsizei;	/* 4-byte signed */
-typedef float		GLfloat;	/* single precision float */
-typedef float		GLclampf;	/* single precision float in [0,1] */
-typedef double		GLdouble;	/* double precision float */
-typedef double		GLclampd;	/* double precision float in [0,1] */
+typedef void			GLvoid;
+typedef unsigned char   GLboolean;
+typedef signed char	    GLbyte;     /* 1-byte signed */
+typedef short           GLshort;    /* 2-byte signed */
+typedef int				GLint;      /* 4-byte signed */
+typedef unsigned char   GLubyte;    /* 1-byte unsigned */
+typedef unsigned short  GLushort;   /* 2-byte unsigned */
+typedef unsigned int    GLuint;	    /* 4-byte unsigned */
+typedef int             GLsizei;    /* 4-byte signed */
+typedef float           GLfloat;    /* single precision float */
+typedef float           GLclampf;   /* single precision float in [0,1] */
+typedef double          GLdouble;   /* double precision float */
+typedef double          GLclampd;   /* double precision float in [0,1] */
+typedef char            GLchar;     /* 1-byte character for shader source and logs */
 
-
-
+#if defined(_WIN64)
+typedef signed   long long int GLsizeiptr;
+typedef signed   long long int GLintptr;
+#else
+typedef signed   long  int     GLsizeiptr;
+typedef signed   long  int     GLintptr;
+#endif
 
 #endif  /* include-once check. */
 

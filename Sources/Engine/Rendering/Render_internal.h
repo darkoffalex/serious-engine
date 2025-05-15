@@ -391,6 +391,8 @@ public:
   inline void MakeScreenEdge(CScreenEdge &sed, FLOAT fI0, FLOAT fJ0, FLOAT fI1, FLOAT fJ1);
   // set scene rendering parameters for one polygon texture
   inline void SetOneTextureParameters(CBrushPolygon &bpo, ScenePolygon &spo, INDEX iTexture);
+  // set scene rendering parameters for one polygon texture (material textures, shader pipeline)
+  inline void SetOneMaterialTextureParameters(CBrushPolygon& bpo, ScenePolygon& spo, INDEX iTexture);
   /* Make a screen polygon for a brush polygon */
   CScreenPolygon *MakeScreenPolygon(CBrushPolygon &bpo);
   /* Add a polygon to scene rendering. */
@@ -488,6 +490,10 @@ public:
   /* Find lights for one model. */
   BOOL FindModelLights( CEntity &en, const CPlacement3D &plModel, COLOR &colLight, COLOR &colAmbient,
                         FLOAT &fTotalShadowIntensity, FLOAT3D &vTotalLightDirection, FLOATplane3D &plFloorPlane);
+
+  /* Find lights for one model (shader pipeline). */
+  void FindShaderModelLights(CEntity& en, const CPlacement3D& plModel, BOOL* pbFullBright);
+
   /* Render a model. */
   void RenderOneModel( CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
                        const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags);

@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Light/Shadows_internal.h>
 #include <Engine/World/WorldEditingProfile.h>
+#include <Engine/World/World.h>
 
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Templates/DynamicArray.cpp>
@@ -102,6 +103,8 @@ public:
   void AddAmbientMaskPoint( UBYTE *pubMask, UBYTE ubMask);
   void AddDiffusionPoint(void);
   void AddDiffusionMaskPoint( UBYTE *pubMask, UBYTE ubMask);
+  void AddShadowMaskOnly(UBYTE* pubMask, UBYTE ubMask, INDEX iLayerCount);
+  void AddConstantLayerIntensity(INDEX iLayerCount);
   BOOL PrepareOneLayerPoint( CBrushShadowLayer *pbsl, BOOL bNoMask);
   void AddOneLayerPoint( CBrushShadowLayer *pbsl, UBYTE *pub, UBYTE ubMask=0);
 
@@ -691,6 +694,181 @@ skipPixel:
 
 }
 
+// Does the same as AddDiffusionMaskPoint but without calculating light's intensity
+// All non-shadowed (unmasked) pixels intensity for layer will be maxed out (max depends on layer count)
+void CLayerMixer::AddShadowMaskOnly(UBYTE* pubMask, UBYTE ubMask, INDEX iLayerCount)
+{
+  // adjust params for diffusion lighting
+  SLONG slMax1oL = MAX_SLONG;
+  _slLightStep = FloatToInt(_slLightStep * _fMinLightDistance * _f1oFallOff);
+  if (_slLightStep != 0) slMax1oL = (256 << 8) / _slLightStep + 256;
+
+  // prepare some local variables
+  __int64 mmDDL2oDU = _slDDL2oDU;
+  __int64 mmDDL2oDV = _slDDL2oDV;
+
+  // Prepare intensity as 1/N and convert to grayscale color
+  FLOAT fIntensity = 1.0f / (FLOAT)iLayerCount;
+  COLOR vColMax = RGBAFloatToColor(fIntensity, fIntensity, fIntensity, fIntensity);
+  ULONG ulLightRGB = ByteSwap(vColMax);
+
+  _slLightMax<<=7;
+  _slLightStep>>=1;
+
+  __asm {
+    // prepare interpolants
+    movd    mm0,D [_slL2Row]
+    movd    mm1,D [_slDL2oDURow]
+    psllq   mm1,32
+    por     mm1,mm0         // MM1 = slDL2oDURow | slL2Row
+    movd    mm0,D [_slDL2oDV]
+    movd    mm2,D [_slDDL2oDUoDV]
+    psllq   mm2,32
+    por     mm2,mm0         // MM2 = slDDL2oDUoDV | slDL2oDV
+    // prepare color
+    pxor    mm0,mm0         // MM0 = 0 | 0 (for unpacking purposes)
+    movd    mm7,D [ulLightRGB]
+    punpcklbw mm7,mm0
+    psllw   mm7,1
+    // loop thru rows
+    mov     esi,D [pubMask]
+    mov     edi,D [_pulLayer]
+    movzx   edx,B [ubMask]
+    mov     ebx,D [_iRowCt]
+rowLoop:
+    push    ebx
+    movd    ebx,mm1         // EBX = slL2Point
+    movq    mm3,mm1
+    psrlq   mm3,32          // MM3 = 0 | slDL2oDU
+    // loop thru pixels in current row
+    mov     ecx,D [_iPixCt]
+pixLoop:
+    // Check if outside radius (slL2Point >= FTOX), set max color if it is
+    cmp     ebx, FTOX
+    jge     setMaxColor
+
+    // Check shadow mask ([esi] & ubMask) for pixels inside radius
+    test    dl,B [esi]
+    jne     setMaxColor     // Max color for non-shadowed
+    jmp     skipPixel       // Skip (leave black) shadowed
+
+setMaxColor:
+    // Set max color
+    movd    mm4, ecx
+    mov     ecx, D[_slLightMax]
+    movd    mm6,ecx 
+    punpcklwd mm6,mm6
+    punpckldq mm6,mm6
+    pmulhw  mm6,mm7
+    // add light pixel to underlying pixel
+    movd    mm5,D [edi]
+    punpcklbw mm5,mm0
+    paddw   mm5,mm6
+    packuswb mm5,mm0
+    movd    D [edi],mm5
+    movd    ecx,mm4
+
+skipPixel:
+    // advance to next pixel
+    add     edi,4
+    movd    eax,mm3
+    add     ebx,eax
+    paddd   mm3,Q [mmDDL2oDU]
+    rol     dl,1
+    adc     esi,0
+    dec     ecx
+    jnz     pixLoop
+    // advance to the next row
+    pop     ebx
+    add     edi,D [_slModulo]
+    paddd   mm1,mm2
+    paddd   mm2,Q [mmDDL2oDV]
+    dec     ebx
+    jnz     rowLoop
+    emms
+  }
+}
+
+// Does the same as AddDiffusionPoint but without calculating light's intensity
+// Pixel intensity for layer will be maxed out (max depends on layer count)
+void CLayerMixer::AddConstantLayerIntensity(INDEX iLayerCount)
+{
+    // Prepare intensity as 1/N and convert to grayscale color
+    FLOAT fIntensity = 1.0f / (FLOAT)iLayerCount;
+    COLOR vColMax = RGBAFloatToColor(fIntensity, fIntensity, fIntensity, fIntensity);
+    ULONG ulLightRGB = ByteSwap(vColMax);
+
+    // Adjust light parameters
+    _slLightMax <<= 7;
+    _slLightStep >>= 1;
+
+    // Prepare interpolants
+    __int64 mmDDL2oDU = _slDDL2oDU;
+    __int64 mmDDL2oDV = _slDDL2oDV;
+
+  __asm {
+    // prepare interpolants
+    movd    mm0,D [_slL2Row]
+    movd    mm1,D [_slDL2oDURow]
+    psllq   mm1,32
+    por     mm1,mm0         // MM1 = slDL2oDURow | slL2Row
+    movd    mm0,D [_slDL2oDV]
+    movd    mm2,D [_slDDL2oDUoDV]
+    psllq   mm2,32
+    por     mm2,mm0         // MM2 = slDDL2oDUoDV | slDL2oDV
+    // prepare color
+    pxor    mm0,mm0
+    movd    mm7,D [ulLightRGB]
+    punpcklbw mm7,mm0
+    psllw   mm7,1
+    // loop thru rows
+    mov     edi,D [_pulLayer]
+    mov     ebx,D [_iRowCt]
+rowLoop:
+    push    ebx
+    movd    ebx,mm1         // EBX = slL2Point
+    movq    mm3,mm1
+    psrlq   mm3,32          // MM3 = 0 | slDL2oDU
+    // loop thru pixels in current row
+    mov     ecx,D [_iPixCt]
+pixLoop:
+    // check if pixel need to be drawn
+    //cmp     ebx,FTOX
+    //jge     skipPixel
+    // calculate intensities and do actual drawing of shadow pixel ARGB
+    movd    mm4, ecx
+    mov     ecx, D[_slLightMax]
+    // calculate rgb pixel to add
+    movd    mm6,ecx    
+    punpcklwd mm6,mm6
+    punpckldq mm6,mm6
+    pmulhw  mm6,mm7
+    // add dynamic light pixel to underlying pixel
+    movd    mm5,D [edi]
+    punpcklbw mm5,mm0
+    paddw   mm5,mm6
+    packuswb mm5,mm0
+    movd    D [edi],mm5
+    movd    ecx,mm4
+skipPixel:
+    // advance to next pixel
+    add     edi,4
+    movd    eax,mm3
+    add     ebx,eax
+    paddd   mm3,Q [mmDDL2oDU]
+    dec     ecx
+    jnz     pixLoop
+    // advance to the next row
+    pop     ebx
+    add     edi,D [_slModulo]
+    paddd   mm1,mm2
+    paddd   mm2,Q [mmDDL2oDV]
+    dec     ebx
+    jnz     rowLoop
+    emms
+  }
+}
+
 // prepares point light that creates layer (returns TRUE if there is infulence)
 BOOL CLayerMixer::PrepareOneLayerPoint( CBrushShadowLayer *pbsl, BOOL bNoMask)
 {
@@ -822,26 +1000,56 @@ void CLayerMixer::AddOneLayerPoint( CBrushShadowLayer *pbsl, UBYTE *pubMask, UBY
     return;
   }
 
-  // determine diffusion presence and corresponding routine
-  BOOL bDiffusion = (_ulLightFlags&LSF_DIFFUSION) && !(_ulPolyFlags&BPOF_NOPLANEDIFFUSION);
-  // masked or non-masked?
-  if( pubMask==NULL) {
-    // non-masked
-    if( !lm_bDynamic && bDiffusion) {
-      // non-masked diffusion
-      AddDiffusionPoint();
-    } else {
-      // non-masked ambient
-      AddAmbientPoint();
-    }
-  } else {
-    // masked
-    if( bDiffusion) {
-      // masked diffusion
-      AddDiffusionMaskPoint( pubMask, ubMask);
-    } else {
-      AddAmbientMaskPoint( pubMask, ubMask);
-    }
+  // Get world
+  CBrushPolygon* pbpo = pbsl->bsl_pbsmShadowMap->GetBrushPolygon();
+  CBrushSector* pbsc = pbpo->bpo_pbscSector;
+  CBrushMip* pbm = pbsc->bsc_pbmBrushMip;
+  CBrush3D* pbr = pbm->bm_pbrBrush;
+  CWorld* pwo = pbr->br_penEntity->GetWorld();
+
+  // If using shaders - only shadows required in shadow-maps (no lighting needed)
+  if (pwo->wo_sBrushShaderInfo.gsi_bLoaded)
+  {
+      if (pubMask == NULL)
+      {
+          AddConstantLayerIntensity(pbsl->bsl_pbsmShadowMap->GetShadowLayersCount());
+      }
+      else
+      {
+          AddShadowMaskOnly(pubMask, ubMask, pbsl->bsl_pbsmShadowMap->GetShadowLayersCount());
+      }
+  }
+  // For classic (fixed pipeline) also calculate lighting in shadow-maps
+  else
+  {
+      // determine diffusion presence and corresponding routine
+      BOOL bDiffusion = (_ulLightFlags & LSF_DIFFUSION) && !(_ulPolyFlags & BPOF_NOPLANEDIFFUSION);
+      // masked or non-masked?
+      if (pubMask == NULL) 
+      {
+          // non-masked
+          if (!lm_bDynamic && bDiffusion) 
+          {
+              // non-masked diffusion
+              AddDiffusionPoint();
+          }
+          else {
+              // non-masked ambient
+              AddAmbientPoint();
+          }
+      }
+      else 
+      {
+          // masked
+          if (bDiffusion) 
+          {
+              // masked diffusion
+              AddDiffusionMaskPoint(pubMask, ubMask);
+          }
+          else {
+              AddAmbientMaskPoint(pubMask, ubMask);
+          }
+      }
   }
 
   // all done
@@ -1224,13 +1432,31 @@ void CLayerMixer::AddOneLayerDirectional( CBrushShadowLayer *pbsl, UBYTE *pubMas
     fIntensity = -((lm_pbpoPolygon->bpo_pbplPlane->bpl_plAbsolute)%lm_vLightDirection);
     fIntensity = ClampDn( fIntensity, 0.0f);
   }
-  // calculate light color and ambient
-  lm_colLight = lm_plsLight->GetLightColor();
-  pbsl->bsl_colLastAnim = lm_colLight;
-  ULONG ulIntensity = NormFloatToByte(fIntensity);
-  ulIntensity = (ulIntensity<<CT_RSHIFT)|(ulIntensity<<CT_GSHIFT)|(ulIntensity<<CT_BSHIFT);
-  lm_colLight = MulColors(   lm_colLight, ulIntensity);
-  lm_colLight = AdjustColor( lm_colLight, _slShdHueShift, _slShdSaturation);
+
+  // get world
+  CBrushPolygon* pbpo = pbsl->bsl_pbsmShadowMap->GetBrushPolygon();
+  CBrushSector* pbsc = pbpo->bpo_pbscSector;
+  CBrushMip* pbm = pbsc->bsc_pbmBrushMip;
+  CBrush3D* pbr = pbm->bm_pbrBrush;
+  CWorld* pwo = pbr->br_penEntity->GetWorld();
+
+  // for shader pipeline we need only shadows, no light color required
+  if (pwo->wo_sBrushShaderInfo.gsi_bLoaded)
+  {
+      FLOAT fIntensity = 1.0f / (FLOAT)pbsl->bsl_pbsmShadowMap->GetShadowLayersCount();
+      lm_colLight = RGBAFloatToColor(fIntensity, fIntensity, fIntensity, fIntensity);
+  }
+  // for classic pipeline (non-shader) - light color should presist in shadow map
+  else
+  {
+      // calculate light color and ambient
+      lm_colLight = lm_plsLight->GetLightColor();
+      pbsl->bsl_colLastAnim = lm_colLight;
+      ULONG ulIntensity = NormFloatToByte(fIntensity);
+      ulIntensity = (ulIntensity << CT_RSHIFT) | (ulIntensity << CT_GSHIFT) | (ulIntensity << CT_BSHIFT);
+      lm_colLight = MulColors(lm_colLight, ulIntensity);
+      lm_colLight = AdjustColor(lm_colLight, _slShdHueShift, _slShdSaturation);
+  }
 
   // masked or non-masked?
   if( pubMask==NULL) {

@@ -34,6 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 #include "gl_functions.h"
+#include "gl_functions_shaders.h"
 
 #undef DLLFUNCTION
 

@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "stdh.h"
 
 #include <Engine/Base/Console.h>
+#include <Engine/Base/Utils.h>
 #include <Engine/Math/Float.h>
 #include <Engine/World/World.h>
 #include <Engine/World/WorldEditingProfile.h>
@@ -39,6 +40,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Templates/Selection.cpp>
 #include <Engine/Terrain/Terrain.h>
+#include <Engine/Graphics/GfxShader.h>
+#include <Engine/Graphics/GfxUniformBuffer.h>
 
 #include <Engine/Templates/Stock_CEntityClass.h>
 
@@ -90,9 +93,22 @@ CWorld::CWorld(void)
   , wo_baBrushes(*new CBrushArchive)
   , wo_taTerrains(*new CTerrainArchive)
   , wo_ulSpawnFlags(0)
+  , wo_sBrushShaderInfo({})
+  , wo_sModelShaderInfo({})
 {
   wo_baBrushes.ba_pwoWorld = this;
   wo_taTerrains.ta_pwoWorld = this;
+
+  // paths to shaders
+  wo_sBrushShaderInfo.gsi_fnmVsSource = CTFileName(CTString(""));
+  wo_sBrushShaderInfo.gsi_fnmGsSource = CTFileName(CTString(""));
+  wo_sBrushShaderInfo.gsi_fnmFsSource = CTFileName(CTString(""));
+  wo_sBrushShaderInfo.gsi_pWorld = this;
+
+  wo_sModelShaderInfo.gsi_fnmVsSource = CTFileName(CTString(""));
+  wo_sModelShaderInfo.gsi_fnmGsSource = CTFileName(CTString(""));
+  wo_sModelShaderInfo.gsi_fnmFsSource = CTFileName(CTString(""));
+  wo_sModelShaderInfo.gsi_pWorld = this;
 
   // create empty texture movements
   wo_attTextureTransformations.New(256);
@@ -139,6 +155,16 @@ CWorld::~CWorld()
 
   delete &wo_baBrushes;
   delete &wo_taTerrains;
+
+  if (wo_sBrushShaderInfo.gsi_bLoaded)
+  {
+      wo_sBrushShaderInfo.Unload();
+  }
+
+  if (wo_sModelShaderInfo.gsi_bLoaded)
+  {
+      wo_sModelShaderInfo.Unload();
+  }
 }
 
 /*
@@ -1156,4 +1182,171 @@ void CWorld::ClearMarkedForUseFlag(void)
       }
     }
   }
+}
+
+void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
+{
+    // Exit if already tried to load
+    if (gsi_bLoadAttempted && !bForce)
+        return;
+
+    // Attempted
+    gsi_bLoadAttempted = TRUE;
+
+    // Exit if some file paths missing
+    if (gsi_fnmVsSource.Length() == 0 || gsi_fnmGsSource.Length() == 0 || gsi_fnmFsSource.Length() == 0)
+    {
+        // Unload if already loaded
+        if (gsi_bLoaded == TRUE)
+        {
+            gsi_bLoaded = FALSE;
+            Unload(); // May throw?
+
+            // Recalculate all shadows after unload
+            if (gsi_pWorld)
+            {
+                gsi_pWorld->DiscardAllShadows();
+                gsi_pWorld->CalculateNonDirectionalShadows();
+                gsi_pWorld->CalculateDirectionalShadows();
+            }
+        }
+
+        return;
+    }
+    
+    // If file paths set
+    try
+    {
+        // Unload if already loaded
+        if (gsi_bLoaded == TRUE)
+        {
+            gsi_bLoaded = FALSE;
+            Unload();
+        }
+
+        // Transform paths to absolute
+        CTFileName fnmVsSrcAbs = _fnmApplicationPath + gsi_fnmVsSource;
+        CTFileName fnmGsSrcAbs = _fnmApplicationPath + gsi_fnmGsSource;
+        CTFileName fnmFsSrcAbs = _fnmApplicationPath + gsi_fnmFsSource;
+
+        // Load shader sources
+        auto strVsSource = Utils::LoadFileAsText(fnmVsSrcAbs.str_String);
+        auto strGsSource = Utils::LoadFileAsText(fnmGsSrcAbs.str_String);
+        auto strFsSource = Utils::LoadFileAsText(fnmFsSrcAbs.str_String);
+
+        // Map of sources
+        // TODO: Need some refactoring (usning not wrapped GL_ varaibles in wrapper methods - not good)
+        std::unordered_map<UINT, std::string> shaderSources = {
+            {GL_VERTEX_SHADER, strVsSource},
+            {GL_GEOMETRY_SHADER, strGsSource},
+            {GL_FRAGMENT_SHADER, strFsSource}
+        };
+
+        // Load shader
+        gsi_pShader = new CGfxShader(shaderSources);
+
+        // Prepare uniform stuff depending on type
+        switch (eUniformType)
+        {
+            case SGfxShaderInfo::SUT_BRUSH:
+            {
+                // Allocate uniform buffer
+                gsi_pShaderUboLights = new CGfxUniformBuffer(sizeof(SShaderLight) * MAX_BRUSH_LIGHTS, 0, GL_STATIC_DRAW);
+
+                // Get uniform IDs
+                auto uniformIds = gsi_pShader->UniformIds({
+                    "texLayer0",     // 0
+                    "texLayer1",     // 1
+                    "texLayer2",     // 2
+                    "texShadow",     // 3
+                    "texSpec",       // 4
+                    "texNormal",     // 5
+                    "texHeight",     // 6
+                    "activeLayers",  // 7
+                    "blendTypes",    // 8
+                    "useShadow",     // 9
+                    "materialUsage", // 10
+                    "activeLights",  // 11
+                    "useLights",     // 12
+                    "heightScale"    // 13
+                });
+
+                // Map uniform ids to structure
+                gsi_sBrushUniforms.wsu_iTexLayer0 = uniformIds[0];
+                gsi_sBrushUniforms.wsu_iTexLayer1 = uniformIds[1];
+                gsi_sBrushUniforms.wsu_iTexLayer2 = uniformIds[2];
+                gsi_sBrushUniforms.wsu_iTexShadow = uniformIds[3];
+                gsi_sBrushUniforms.wsu_iTexSpec = uniformIds[4];
+                gsi_sBrushUniforms.wsu_iTexNormal = uniformIds[5];
+                gsi_sBrushUniforms.wsu_iTexHeight = uniformIds[6];
+                gsi_sBrushUniforms.wsu_iActiveLayers = uniformIds[7];
+                gsi_sBrushUniforms.wsu_iLayersBlending = uniformIds[8];
+                gsi_sBrushUniforms.wsu_iUseShadow = uniformIds[9];
+                gsi_sBrushUniforms.wsu_iMaterialUsage = uniformIds[10];
+                gsi_sBrushUniforms.wsu_iActiveLights = uniformIds[11];
+                gsi_sBrushUniforms.wsu_iUseLights = uniformIds[12];
+                gsi_sBrushUniforms.wsu_iHeightScale = uniformIds[13];
+                break;
+            }
+
+            case SGfxShaderInfo::SUT_MODELS:
+            {
+                // Allocate uniform buffer
+                gsi_pShaderUboLights = new CGfxUniformBuffer(sizeof(SShaderLight) * MAX_MODEL_LIGHTS, 1, GL_STATIC_DRAW);
+
+                // Get uniform IDs
+                auto uniformIds = gsi_pShader->UniformIds({
+                    "texColor",      // 0
+                    "texSpec",       // 1
+                    "texNormal",     // 2
+                    "texHeight",     // 3
+                    "texEmission",   // 4
+                    "materialUsage", // 5
+                    "activeLights",  // 6
+                    "useLights",     // 7
+                    "emissionColor", // 8
+                    "emissionPower", // 9
+                    "heightScale"    // 10
+                });
+
+                // Map uniform ids to structure
+                gsi_sModelUniforms.wsu_iTexColor = uniformIds[0];
+                gsi_sModelUniforms.wsu_iTexSpec = uniformIds[1];
+                gsi_sModelUniforms.wsu_iTexNormal = uniformIds[2];
+                gsi_sModelUniforms.wsu_iTexHeight = uniformIds[3];
+                gsi_sModelUniforms.wsu_iTexEmission = uniformIds[4];
+                gsi_sModelUniforms.wsu_iMaterialUsage = uniformIds[5];
+                gsi_sModelUniforms.wsu_iActiveLights = uniformIds[6];
+                gsi_sModelUniforms.wsu_iUseLights = uniformIds[7];
+                gsi_sModelUniforms.wsu_iEmissionColor = uniformIds[8];
+                gsi_sModelUniforms.wsu_iEmissionPower = uniformIds[9];
+                gsi_sModelUniforms.wsu_iHeightScale = uniformIds[10];
+                break;
+            }
+            default:
+                break;
+        }
+
+        // Mark as loaded
+        gsi_bLoaded = TRUE;
+
+        // Recalculate all shadows after load (everytime?)
+        if (gsi_pWorld)
+        {
+            gsi_pWorld->DiscardAllShadows();
+            gsi_pWorld->CalculateNonDirectionalShadows();
+            gsi_pWorld->CalculateDirectionalShadows();
+        }
+    }
+    catch (std::exception& ex)
+    {
+        // Crash on fail? May be just show error and let continue?
+        FatalError("%s", ex.what());
+    }
+}
+
+void SGfxShaderInfo::Unload()
+{
+    delete gsi_pShader;
+    delete gsi_pShaderUboLights;
 }
