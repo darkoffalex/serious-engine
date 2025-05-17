@@ -99,6 +99,9 @@ public:
   CTString omt_Name;              // name of this material
   CTString omt_strName2;
   CTString omt_strName3;
+  CTString omt_strName4;
+  CTString omt_strName5;
+  CTString omt_strName6;
   COLOR omt_Color;                // color of this material (surface)
 
   /* Default constructor. */
@@ -110,6 +113,9 @@ public:
     omt_Name = omt.omt_Name;
     omt_strName2 = omt.omt_strName2;
     omt_strName3 = omt.omt_strName3;
+    omt_strName4 = omt.omt_strName4;
+    omt_strName5 = omt.omt_strName5;
+    omt_strName6 = omt.omt_strName6;
     omt_Color = omt.omt_Color;
   };
   /* Destructor. */
@@ -119,6 +125,9 @@ public:
     omt_Name.Clear();
     omt_strName2.Clear();
     omt_strName3.Clear();
+    omt_strName4.Clear();
+    omt_strName5.Clear();
+    omt_strName6.Clear();
   };
 
   /* Assignment. */
@@ -126,6 +135,9 @@ public:
     omt_Name = omt.omt_Name;
     omt_strName2 = omt.omt_strName2;
     omt_strName3 = omt.omt_strName3;
+    omt_strName4 = omt.omt_strName4;
+    omt_strName5 = omt.omt_strName5;
+    omt_strName6 = omt.omt_strName6;
     omt_Color = omt.omt_Color;
     return *this;
   };
@@ -169,7 +181,7 @@ public:
   CObjectPlane *opo_Plane;                        // plane of this polygon
   CDynamicArray<CObjectPolygonEdge> opo_PolygonEdges;  // edges in this polygon
   CObjectMaterial *opo_Material;                  // material of this polygon
-  CMappingDefinition opo_amdMappings[4];          // mapping of textures on this polygon
+  CMappingDefinition opo_amdMappings[7];          // mapping of textures on this polygon
   ULONG opo_ulFlags;                              // various flags
   COLOR opo_colorColor;                           // color of this polygon
   void *opo_pvOriginal;                           // used for format conversions

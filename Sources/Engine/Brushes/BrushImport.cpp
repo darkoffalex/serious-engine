@@ -181,6 +181,9 @@ void CBrushSector::FromObjectSector_t(CObjectSector &osc) // throw char *
     bpo.bpo_abptTextures[0].bpt_toTexture.SetData_t(opo.opo_Material->omt_Name);
     bpo.bpo_abptTextures[1].bpt_toTexture.SetData_t(opo.opo_Material->omt_strName2);
     bpo.bpo_abptTextures[2].bpt_toTexture.SetData_t(opo.opo_Material->omt_strName3);
+    bpo.bpo_abptTextures[3].bpt_toTexture.SetData_t(opo.opo_Material->omt_strName4);
+    bpo.bpo_abptTextures[4].bpt_toTexture.SetData_t(opo.opo_Material->omt_strName5);
+    bpo.bpo_abptTextures[5].bpt_toTexture.SetData_t(opo.opo_Material->omt_strName6);
     // set polygon index
     opo.opo_Index = iPolygon;
     // set polygon color
@@ -190,6 +193,9 @@ void CBrushSector::FromObjectSector_t(CObjectSector &osc) // throw char *
     bpo.bpo_abptTextures[1].bpt_mdMapping = opo.opo_amdMappings[1];
     bpo.bpo_abptTextures[2].bpt_mdMapping = opo.opo_amdMappings[2];
     bpo.bpo_mdShadow                      = opo.opo_amdMappings[3];
+    bpo.bpo_abptTextures[3].bpt_mdMapping = opo.opo_amdMappings[4];
+    bpo.bpo_abptTextures[4].bpt_mdMapping = opo.opo_amdMappings[5];
+    bpo.bpo_abptTextures[5].bpt_mdMapping = opo.opo_amdMappings[6];
     // set sector pointer
     bpo.bpo_pbscSector = this;
 
@@ -235,17 +241,17 @@ void CBrushSector::FromObjectSector_t(CObjectSector &osc) // throw char *
       bpo.bpo_abptTextures[2].s.bpt_ubBlend = BPT_BLEND_SHADE;
 
       // shader pipeline textures
-      bpo.bpo_abptTextures[3].s.bpt_colColor = C_BLACK | CT_OPAQUE;
+      bpo.bpo_abptTextures[3].s.bpt_colColor = C_WHITE | CT_OPAQUE;
       bpo.bpo_abptTextures[3].s.bpt_ubFlags = BPTF_DISCARDABLE;
       bpo.bpo_abptTextures[3].s.bpt_ubScroll = 0;
       bpo.bpo_abptTextures[3].s.bpt_ubBlend = BPT_BLEND_OPAQUE;
 
-      bpo.bpo_abptTextures[4].s.bpt_colColor = C_BLACK | CT_OPAQUE;
+      bpo.bpo_abptTextures[4].s.bpt_colColor = C_WHITE | CT_OPAQUE;
       bpo.bpo_abptTextures[4].s.bpt_ubFlags = BPTF_DISCARDABLE;
       bpo.bpo_abptTextures[4].s.bpt_ubScroll = 0;
       bpo.bpo_abptTextures[4].s.bpt_ubBlend = BPT_BLEND_OPAQUE;
 
-      bpo.bpo_abptTextures[5].s.bpt_colColor = C_BLACK | CT_OPAQUE;
+      bpo.bpo_abptTextures[5].s.bpt_colColor = C_WHITE | CT_OPAQUE;
       bpo.bpo_abptTextures[5].s.bpt_ubFlags = BPTF_DISCARDABLE;
       bpo.bpo_abptTextures[5].s.bpt_ubScroll = 0;
       bpo.bpo_abptTextures[5].s.bpt_ubBlend = BPT_BLEND_OPAQUE;

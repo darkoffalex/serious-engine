@@ -551,6 +551,9 @@ void CBrushSector::TriangularizeMarkedPolygons( void)
       bpoNew.bpo_abptTextures[0].CopyTextureProperties( itbpo->bpo_abptTextures[0], TRUE);
       bpoNew.bpo_abptTextures[1].CopyTextureProperties( itbpo->bpo_abptTextures[1], TRUE);
       bpoNew.bpo_abptTextures[2].CopyTextureProperties( itbpo->bpo_abptTextures[2], TRUE);
+      bpoNew.bpo_abptTextures[3].CopyTextureProperties( itbpo->bpo_abptTextures[3], TRUE);
+      bpoNew.bpo_abptTextures[4].CopyTextureProperties( itbpo->bpo_abptTextures[4], TRUE);
+      bpoNew.bpo_abptTextures[5].CopyTextureProperties( itbpo->bpo_abptTextures[5], TRUE);
 
       bpoNew.bpo_colColor         = itbpo->bpo_colColor;
       bpoNew.bpo_ulFlags          = itbpo->bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
@@ -644,6 +647,9 @@ void CBrushSector::TriangularizeMarkedPolygons( void)
         bpoNew.bpo_abptTextures[0].CopyTextureProperties( itbpo->bpo_abptTextures[0], TRUE);
         bpoNew.bpo_abptTextures[1].CopyTextureProperties( itbpo->bpo_abptTextures[1], TRUE);
         bpoNew.bpo_abptTextures[2].CopyTextureProperties( itbpo->bpo_abptTextures[2], TRUE);
+        bpoNew.bpo_abptTextures[3].CopyTextureProperties( itbpo->bpo_abptTextures[3], TRUE);
+        bpoNew.bpo_abptTextures[4].CopyTextureProperties( itbpo->bpo_abptTextures[4], TRUE);
+        bpoNew.bpo_abptTextures[5].CopyTextureProperties( itbpo->bpo_abptTextures[5], TRUE);
 
         bpoNew.bpo_colColor         = itbpo->bpo_colColor;
         bpoNew.bpo_ulFlags          = itbpo->bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
@@ -783,6 +789,9 @@ void CBrushSector::SubdivideTriangles( CBrushPolygonSelection &selPolygon)
       bpoNew.bpo_abptTextures[0].CopyTextureProperties( bpoOld.bpo_abptTextures[0], TRUE);
       bpoNew.bpo_abptTextures[1].CopyTextureProperties( bpoOld.bpo_abptTextures[1], TRUE);
       bpoNew.bpo_abptTextures[2].CopyTextureProperties( bpoOld.bpo_abptTextures[2], TRUE);
+      bpoNew.bpo_abptTextures[3].CopyTextureProperties( bpoOld.bpo_abptTextures[3], TRUE);
+      bpoNew.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
+      bpoNew.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
 
       bpoNew.bpo_colColor         = bpoOld.bpo_colColor;
       bpoNew.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
@@ -897,6 +906,9 @@ void CBrushSector::SubdivideTriangles( CBrushPolygonSelection &selPolygon)
       bpoNew1.bpo_abptTextures[0].CopyTextureProperties( bpoOld.bpo_abptTextures[0], TRUE);
       bpoNew1.bpo_abptTextures[1].CopyTextureProperties( bpoOld.bpo_abptTextures[1], TRUE);
       bpoNew1.bpo_abptTextures[2].CopyTextureProperties( bpoOld.bpo_abptTextures[2], TRUE);
+      bpoNew1.bpo_abptTextures[3].CopyTextureProperties( bpoOld.bpo_abptTextures[3], TRUE);
+      bpoNew1.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
+      bpoNew1.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
       bpoNew1.bpo_colColor         = bpoOld.bpo_colColor;
       bpoNew1.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew1.bpo_colShadow        = bpoOld.bpo_colShadow;
@@ -934,6 +946,9 @@ void CBrushSector::SubdivideTriangles( CBrushPolygonSelection &selPolygon)
       bpoNew2.bpo_abptTextures[0].CopyTextureProperties( bpoOld.bpo_abptTextures[0], TRUE);
       bpoNew2.bpo_abptTextures[1].CopyTextureProperties( bpoOld.bpo_abptTextures[1], TRUE);
       bpoNew2.bpo_abptTextures[2].CopyTextureProperties( bpoOld.bpo_abptTextures[2], TRUE);
+      bpoNew2.bpo_abptTextures[3].CopyTextureProperties( bpoOld.bpo_abptTextures[3], TRUE);
+      bpoNew2.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
+      bpoNew2.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
       bpoNew2.bpo_colColor         = bpoOld.bpo_colColor;
       bpoNew2.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew2.bpo_colShadow        = bpoOld.bpo_colShadow;
@@ -971,6 +986,9 @@ void CBrushSector::SubdivideTriangles( CBrushPolygonSelection &selPolygon)
       bpoNew3.bpo_abptTextures[0].CopyTextureProperties( bpoOld.bpo_abptTextures[0], TRUE);
       bpoNew3.bpo_abptTextures[1].CopyTextureProperties( bpoOld.bpo_abptTextures[1], TRUE);
       bpoNew3.bpo_abptTextures[2].CopyTextureProperties( bpoOld.bpo_abptTextures[2], TRUE);
+      bpoNew3.bpo_abptTextures[3].CopyTextureProperties( bpoOld.bpo_abptTextures[3], TRUE);
+      bpoNew3.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
+      bpoNew3.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
       bpoNew3.bpo_colColor         = bpoOld.bpo_colColor;
       bpoNew3.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew3.bpo_colShadow        = bpoOld.bpo_colShadow;
@@ -1155,6 +1173,9 @@ void CBrushSector::ReTriple( CBrushPolygonSelection &selPolygon)
       bpoNew.bpo_abptTextures[0].CopyTextureProperties( bpoOld.bpo_abptTextures[0], TRUE);
       bpoNew.bpo_abptTextures[1].CopyTextureProperties( bpoOld.bpo_abptTextures[1], TRUE);
       bpoNew.bpo_abptTextures[2].CopyTextureProperties( bpoOld.bpo_abptTextures[2], TRUE);
+      bpoNew.bpo_abptTextures[3].CopyTextureProperties( bpoOld.bpo_abptTextures[3], TRUE);
+      bpoNew.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
+      bpoNew.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
 
       bpoNew.bpo_colColor         = bpoOld.bpo_colColor;
       bpoNew.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
@@ -1279,6 +1300,9 @@ void CBrushSector::ReTriple( CBrushPolygonSelection &selPolygon)
     bpoNew.bpo_abptTextures[0].CopyTextureProperties( bpoOld.bpo_abptTextures[0], TRUE);
     bpoNew.bpo_abptTextures[1].CopyTextureProperties( bpoOld.bpo_abptTextures[1], TRUE);
     bpoNew.bpo_abptTextures[2].CopyTextureProperties( bpoOld.bpo_abptTextures[2], TRUE);
+    bpoNew.bpo_abptTextures[3].CopyTextureProperties( bpoOld.bpo_abptTextures[3], TRUE);
+    bpoNew.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
+    bpoNew.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
 
     bpoNew.bpo_colColor         = bpoOld.bpo_colColor;
     bpoNew.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
@@ -1322,6 +1346,9 @@ void CBrushSector::ReTriple( CBrushPolygonSelection &selPolygon)
     bpoNew.bpo_abptTextures[0].CopyTextureProperties( bpoOld.bpo_abptTextures[0], TRUE);
     bpoNew.bpo_abptTextures[1].CopyTextureProperties( bpoOld.bpo_abptTextures[1], TRUE);
     bpoNew.bpo_abptTextures[2].CopyTextureProperties( bpoOld.bpo_abptTextures[2], TRUE);
+    bpoNew.bpo_abptTextures[3].CopyTextureProperties( bpoOld.bpo_abptTextures[3], TRUE);
+    bpoNew.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
+    bpoNew.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
 
     bpoNew.bpo_colColor         = bpoOld.bpo_colColor;
     bpoNew.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);

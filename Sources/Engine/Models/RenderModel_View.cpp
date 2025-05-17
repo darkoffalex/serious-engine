@@ -39,7 +39,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define TEX_UNIT_MDL_NORM       2
 #define TEX_UNIT_MDL_REFL       3
 #define TEX_UNIT_MDL_HEIGHT     4
-#define TEX_UNIT_MDL_EMISSION   5
+#define TEX_UNIT_MDL_EMISSION   6
 
 // asm shortcuts
 #define O offset

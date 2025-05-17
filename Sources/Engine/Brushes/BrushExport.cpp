@@ -143,6 +143,9 @@ void CBrushSector::ToObjectSector(CObjectSector &osc)
     omt.omt_Name = bpo.bpo_abptTextures[0].bpt_toTexture.GetName();
     omt.omt_strName2 = bpo.bpo_abptTextures[1].bpt_toTexture.GetName();
     omt.omt_strName3 = bpo.bpo_abptTextures[2].bpt_toTexture.GetName();
+    omt.omt_strName4 = bpo.bpo_abptTextures[3].bpt_toTexture.GetName();
+    omt.omt_strName5 = bpo.bpo_abptTextures[4].bpt_toTexture.GetName();
+    omt.omt_strName6 = bpo.bpo_abptTextures[5].bpt_toTexture.GetName();
 
     // set polygon color
     opo.opo_colorColor = bpo.bpo_colColor;
@@ -151,6 +154,9 @@ void CBrushSector::ToObjectSector(CObjectSector &osc)
     opo.opo_amdMappings[1] = bpo.bpo_abptTextures[1].bpt_mdMapping;
     opo.opo_amdMappings[2] = bpo.bpo_abptTextures[2].bpt_mdMapping;
     opo.opo_amdMappings[3] = bpo.bpo_mdShadow;
+    opo.opo_amdMappings[4] = bpo.bpo_abptTextures[3].bpt_mdMapping;
+    opo.opo_amdMappings[5] = bpo.bpo_abptTextures[4].bpt_mdMapping;
+    opo.opo_amdMappings[6] = bpo.bpo_abptTextures[5].bpt_mdMapping;
 
     // set polygon flags
     opo.opo_ulFlags = bpo.bpo_ulFlags;
