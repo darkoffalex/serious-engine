@@ -550,6 +550,8 @@ public:
   virtual BOOL IsTargetable(void) const;
   /* Check if entity is marker */
   virtual BOOL IsMarker(void) const;
+  /* Check if entity is item */
+  virtual BOOL IsItem(void) const;
   /* Check if entity is important */
   virtual BOOL IsImportant(void) const;
   /* Check if entity is moved on a route set up by its targets. */

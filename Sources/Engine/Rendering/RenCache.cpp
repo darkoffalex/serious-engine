@@ -618,6 +618,9 @@ inline void CRenderer::SetOneMaterialTextureParameters(CBrushPolygon& bpo, Scene
             mdTmp.md_fVOffset += (FloatToInt(fV * 1024.0f) & ~mexMaskV) / 1024.0f;
             // make texture mapping vectors from default vectors of the plane
             mdTmp.MakeMappingVectors(wpl.wpl_mvView, spo.spo_amvMappingMtl[iLayer]);
+            // material texture scale hotfix (temporary solution)
+            spo.spo_amvMappingMtl[iLayer].mv_vU *= 0.5f;
+            spo.spo_amvMappingMtl[iLayer].mv_vV *= 0.5f;
         }
         // if texture is clamped
         else {
@@ -628,11 +631,11 @@ inline void CRenderer::SetOneMaterialTextureParameters(CBrushPolygon& bpo, Scene
     // if texture should be transformed
     else {
         // make mapping vectors as normal and then transform them
-        CMappingDefinition& mdBase = bpo.bpo_abptTextures[iLayer].bpt_mdMapping;
+        CMappingDefinition& mdBase = bpo.bpo_abptTextures[3 + iLayer].bpt_mdMapping;
         CMappingDefinition& mdScroll = re_pwoWorld->wo_attTextureTransformations[iTransformation].tt_mdTransformation;
         CMappingVectors mvTmp;
         mdBase.MakeMappingVectors(wpl.wpl_mvView, mvTmp);
-        mdScroll.TransformMappingVectors(mvTmp, spo.spo_amvMappingMtl[iLayer]);
+        mdScroll.TransformMappingVectors(mvTmp, spo.spo_amvMappingMtl[3 + iLayer]);
     }
 }
 

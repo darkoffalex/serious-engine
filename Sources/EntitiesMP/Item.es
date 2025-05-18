@@ -234,7 +234,11 @@ functions:
     ModelChangeNotify();
   };
 
-
+  // this is item
+  virtual BOOL IsItem(void) const
+  {
+      return TRUE;
+  }
 
   // returns bytes of memory used by this object
   SLONG GetUsedMemory(void)

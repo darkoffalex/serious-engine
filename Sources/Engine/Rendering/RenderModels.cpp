@@ -873,7 +873,7 @@ void CRenderer::RenderModels( BOOL bBackground)
       auto* pWorld = dm.dm_penModel->GetWorld();
 
       // don't use sahder for specific entities
-      BOOL bShaderIgnored = en.GetCollisionFlags() & ECF_ITEM;
+      BOOL bShaderIgnored = en.IsItem() || en.IsMarker();
 
       // use shader program if loaded
       if (pWorld->wo_sModelShaderInfo.gsi_bLoaded && !bShaderIgnored)

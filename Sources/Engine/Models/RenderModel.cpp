@@ -600,8 +600,8 @@ void CModelObject::RenderModel( CRenderModel &rm, CWorld* pWorld)
     // render complete model
     rm.SetModelView();
 
-    // shader pipeline
-    if (pWorld && pWorld->wo_sModelShaderInfo.gsi_bLoaded)
+    // shader pipeline (if loaded & not weapons)
+    if (pWorld && pWorld->wo_sModelShaderInfo.gsi_bLoaded && !(rm.rm_ulFlags & RMF_WEAPON))
     {
         RenderShaderModel_View(rm, pWorld->wo_sModelShaderInfo);
     }
@@ -639,7 +639,7 @@ void CModelObject::RenderModel( CRenderModel &rm, CWorld* pWorld)
     CAttachmentModelObject *pamo = itamo;
     if( pamo->amo_prm==NULL) continue; // skip view-rejected attachments
     _pfModelProfile.StopTimer( CModelProfile::PTI_RENDERMODEL);
-    pamo->amo_moModelObject.RenderModel( *pamo->amo_prm);
+    pamo->amo_moModelObject.RenderModel( *pamo->amo_prm, pWorld);
     _pfModelProfile.StartTimer( CModelProfile::PTI_RENDERMODEL);
   }
   // done

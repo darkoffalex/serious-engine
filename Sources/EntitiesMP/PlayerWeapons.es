@@ -1041,7 +1041,7 @@ functions:
     }      
     
     m_moWeapon.SetupModelRendering(rmMain);
-    m_moWeapon.RenderModel(rmMain);
+    m_moWeapon.RenderModel(rmMain, GetWorld());
 
     /*if (tmSeriousDamage>tmNow && tmInvulnerability>tmNow) {
       Particle_PrepareSystem(pdp, apr);

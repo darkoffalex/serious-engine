@@ -316,6 +316,11 @@ BOOL CEntity::IsMarker(void) const{
   // cannot be marker unless this function is overridden
   return FALSE;
 }
+/* Check if entity is item */
+BOOL CEntity::IsItem(void) const{
+    // cannot be item unless this function is overridd
+    return FALSE;
+}
 /* Check if entity is important */
 BOOL CEntity::IsImportant(void) const{
   // cannot be important unless this function is overridden
