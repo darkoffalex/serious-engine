@@ -18,6 +18,8 @@ out GS_OUT {
     mat3 TBN;      // TBN matrix for normal mapping
 } gs_out;
 
+uniform int flatShading;
+
 void main()
 {
     vec3 edge1 = gs_in[1].position - gs_in[0].position;
@@ -34,9 +36,20 @@ void main()
         f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y),
         f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z)));
 
+    vec3 normal = vec3(0.0f);
+
+    // Normal for flat shading
+    if(bool(flatShading))
+    {
+        normal = normalize(cross(edge1, edge2));
+    }
+    
     for (int i = 0; i < 3; i++) 
     {
-        vec3 normal = normalize(gs_in[i].normal);
+        if(!bool(flatShading))
+        {
+            normal = normalize(gs_in[i].normal);
+        }
 
         gl_Position = gl_in[i].gl_Position;
         gs_out.uv = gs_in[i].uv;

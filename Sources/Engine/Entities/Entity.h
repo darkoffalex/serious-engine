@@ -102,6 +102,7 @@ public:
 #define ENF_TEMPPREDICTOR     (1L<<20)  // predictor that was spawned during prediction (doesn't have a predictor)
 #define ENF_HIDDEN            (1L<<21)  // set if the entity is hidden (for editing)
 #define ENF_NOSHADINGINFO     (1L<<22)  // the entity doesn't need FindShadingInfo(), it will set its own shading
+#define ENF_FLAT_SHADING      (1L<<23)  // use flat shading for models (shader pipeline only)
 
 
 // selections of entities

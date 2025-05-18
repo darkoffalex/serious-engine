@@ -1306,7 +1306,8 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
                     "useLights",     // 7
                     "emissionColor", // 8
                     "emissionPower", // 9
-                    "heightScale"    // 10
+                    "heightScale",   // 10
+                    "flatShading"    // 11
                 });
 
                 // Map uniform ids to structure
@@ -1321,6 +1322,7 @@ void SGfxShaderInfo::TryLoadOnce(EUniformTypes eUniformType, BOOL bForce)
                 gsi_sModelUniforms.wsu_iEmissionColor = uniformIds[8];
                 gsi_sModelUniforms.wsu_iEmissionPower = uniformIds[9];
                 gsi_sModelUniforms.wsu_iHeightScale = uniformIds[10];
+                gsi_sModelUniforms.wsu_iFlatShading = uniformIds[11];
                 break;
             }
             default:

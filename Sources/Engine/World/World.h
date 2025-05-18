@@ -86,6 +86,7 @@ struct SModelShaderUniforms
     INT32 wsu_iEmissionColor;
     INT32 wsu_iEmissionPower;
     INT32 wsu_iHeightScale;
+    INT32 wsu_iFlatShading;
 };
 
 // Light-source shader UBO entry

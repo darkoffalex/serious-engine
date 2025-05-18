@@ -559,6 +559,9 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
       FLOAT fEmissionPower;
       en.GetEmissionParameters(colEmission, fEmissionPower);
 
+      // Flat shading option
+      gfxUniform1i(uniformIds.wsu_iFlatShading, (INDEX)(en.GetFlags() & ENF_FLAT_SHADING));
+
       UBYTE ubColEmission[3] = { 0, 0, 0 };
       ColorToRGB(colEmission, ubColEmission[0], ubColEmission[1], ubColEmission[2]);
       FLOAT3D fColEmission = FLOAT3D((FLOAT)ubColEmission[0] / 255.0f, (FLOAT)ubColEmission[1] / 255.0f, (FLOAT)ubColEmission[2] / 255.0f);

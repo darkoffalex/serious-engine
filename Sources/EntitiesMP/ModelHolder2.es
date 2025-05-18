@@ -113,6 +113,7 @@ properties:
 100 FLOAT m_fMaxTessellationLevel "Max tessellation level" = 0.0f,
 104 FLOAT m_fEmissionPower "Emission power" = 1.0f,
 105 FLOAT m_fHeightScale   "Height map scale" = 1.0f,
+106 BOOL  m_bShadeFlat     "Shade flat" = FALSE,
 
 {
   CTFileName m_fnOldModel;  // used for remembering last selected model (not saved at all)
@@ -638,6 +639,12 @@ functions:
       SetFlags(GetFlags()|ENF_BACKGROUND);
     } else {
       SetFlags(GetFlags()&~ENF_BACKGROUND);
+    }
+
+    if (m_bShadeFlat) {
+        SetFlags(GetFlags()|ENF_FLAT_SHADING);
+    } else {
+        SetFlags(GetFlags()&~ENF_FLAT_SHADING);
     }
 
     try {
