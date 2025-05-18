@@ -27,6 +27,8 @@ enum LightType {
   2 LT_STRONG_AMBIENT "Strong ambient light",
   3 LT_DIRECTIONAL    "Directional light",
   4 LT_STRONG_POINT   "Strong point light",
+  5 LT_SPOT_POINT     "Spot point light",
+  6 LT_SPOT_AMBIENT   "Spot ambient light"
 };
 
 enum LensFlareType {                
@@ -92,6 +94,8 @@ properties:
    30 CTFileName m_fnmAmbientLightAnimation      "Ambient light animation file" = CTString(""),
    31 ANIMATION m_iAmbientLightAnimation         "Ambient light animation" = 0,
    32 CAnimObject m_aoAmbientLightAnimation,
+   33 ANGLE m_fCutOffInnerAngle           "Spot light inner angle" = 30.0f,
+   34 ANGLE m_fCutOffOuterAngle           "Spot light outer angle" = 45.0f,
 {
   CLightSource m_lsLightSource;
   CBoolDefaultFalse m_bdfInitialized; // set if already initialized once
@@ -223,7 +227,14 @@ functions:
     case LT_AMBIENT:
       lsNew.ls_ulFlags = 0;
       break;
+    case LT_SPOT_POINT:
+      lsNew.ls_ulFlags = LSF_SPOTLIGHT | LSF_CASTSHADOWS;
+      break;
+    case LT_SPOT_AMBIENT:
+      lsNew.ls_ulFlags = LSF_SPOTLIGHT;
+      break;
     }
+
     if( m_bSubstractSectorAmbient) { lsNew.ls_ulFlags |= LSF_SUBSTRACTSECTORAMBIENT;  }
     if( m_bLensFlareOnly)          { lsNew.ls_ulFlags |= LSF_LENSFLAREONLY; }
     if( m_bDynamic)                { lsNew.ls_ulFlags |= LSF_DYNAMIC; }
@@ -250,6 +261,8 @@ functions:
     lsNew.ls_rFallOff = m_rFallOffRange;
     lsNew.ls_fNearClipDistance = m_fNearClip;
     lsNew.ls_fFarClipDistance  = m_fFarClip;
+    lsNew.ls_fSpotCutOffInner = m_fCutOffInnerAngle;
+    lsNew.ls_fSpotCutOffOuter = m_fCutOffOuterAngle;
     // hot spot for strong lights is 90% of light range
     if( m_ltType == LT_STRONG_AMBIENT || m_ltType == LT_STRONG_POINT) {
       lsNew.ls_rHotSpot = lsNew.ls_rFallOff*0.9f;
@@ -418,9 +431,9 @@ procedures:
       SetModelMainTexture(TEXTURE_REAL_AMBIENT_LIGHT);
     }
     // initialize spot light
-    else if( m_ltType == LT_DIRECTIONAL)
+    else if( m_ltType == LT_DIRECTIONAL || m_ltType == LT_SPOT_POINT || m_ltType == LT_SPOT_AMBIENT)
     {
-      strType = "directional";
+      strType = m_ltType == LT_DIRECTIONAL ? "directional" : "spot";
       // set model to spot light
       SetModel(MODEL_SPOT_LIGHT);
       // set texture of spot light model

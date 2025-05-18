@@ -41,6 +41,8 @@ CLightSource::CLightSource(void)
   ls_ulFlags = -1;
   ls_rHotSpot = -1;
   ls_rFallOff = -1;
+  ls_fSpotCutOffInner = -1;
+  ls_fSpotCutOffOuter = -1;
   ls_colColor = 0;
   ls_colAmbient = 0;
   ls_ubLightAnimationObject = -1;
@@ -596,6 +598,8 @@ void CLightSource::SetLightSourceWithNoDiscarding( const CLightSource &lsOrigina
   ls_ulFlags                  = lsOriginal.ls_ulFlags;
   ls_rHotSpot                 = lsOriginal.ls_rHotSpot;
   ls_rFallOff                 = lsOriginal.ls_rFallOff;
+  ls_fSpotCutOffInner         = lsOriginal.ls_fSpotCutOffInner;
+  ls_fSpotCutOffOuter         = lsOriginal.ls_fSpotCutOffOuter;
   ls_colColor                 = lsOriginal.ls_colColor   & ~0xFF;
   ls_colAmbient               = lsOriginal.ls_colAmbient & ~0xFF;
   ls_ubLightAnimationObject   = lsOriginal.ls_ubLightAnimationObject;
@@ -613,6 +617,8 @@ void CLightSource::SetLightSource(const CLightSource &lsOriginal)
   // test if layers should be discarded
   BOOL bDiscardLayers =
     ls_rFallOff               !=  lsOriginal.ls_rFallOff               ||
+    ls_fSpotCutOffInner       !=  lsOriginal.ls_fSpotCutOffInner       ||
+    ls_fSpotCutOffOuter       !=  lsOriginal.ls_fSpotCutOffOuter       ||
     ls_ubPolygonalMask        !=  lsOriginal.ls_ubPolygonalMask        ||
     ls_ulFlags                !=  lsOriginal.ls_ulFlags                ||
     ls_fNearClipDistance      !=  lsOriginal.ls_fNearClipDistance      ||
@@ -620,6 +626,8 @@ void CLightSource::SetLightSource(const CLightSource &lsOriginal)
   // test if shadows should be uncached
   BOOL bUncacheShadows = bDiscardLayers ||
     ls_rHotSpot               !=  lsOriginal.ls_rHotSpot               ||
+    ls_fSpotCutOffInner       !=  lsOriginal.ls_fSpotCutOffInner       ||
+    ls_fSpotCutOffOuter       !=  lsOriginal.ls_fSpotCutOffOuter       ||
     ls_colColor               !=  lsOriginal.ls_colColor               ||
     ls_colAmbient             !=  lsOriginal.ls_colAmbient             ||
     ls_ubLightAnimationObject !=  lsOriginal.ls_ubLightAnimationObject ;

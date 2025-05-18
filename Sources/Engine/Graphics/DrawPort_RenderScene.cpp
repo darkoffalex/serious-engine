@@ -1782,6 +1782,9 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                   if (plsLight->ls_ulFlags & LSF_DIRECTIONAL) {
                       eType = WorldShaderLightType::WSLT_DIRECTIONAL;
                   }
+                  else if (plsLight->ls_ulFlags & LSF_SPOTLIGHT) {
+                      eType = WorldShaderLightType::WSLT_SPOT;
+                  }
                   else if (plsLight->ls_ulFlags & LSF_CASTSHADOWS) {
                       eType = WorldShaderLightType::WSLT_POINT;
                   }
@@ -1797,6 +1800,8 @@ void RSRenderGroupInternal( ScenePolygon *pspoGroup, ULONG ulGroupFlags, CWorld*
                   sLightData.wsl_vColorAmbient = FLOAT3D((FLOAT)ubAmbient[0] / 255.0f, (FLOAT)ubAmbient[1] / 255.0f, (FLOAT)ubAmbient[2] / 255.0f);
                   sLightData.wsl_fFallOff = plsLight->ls_rFallOff;
                   sLightData.wsl_fHotSpot = plsLight->ls_rHotSpot;
+                  sLightData.wsl_fCutOffMin = plsLight->ls_fSpotCutOffInner;
+                  sLightData.wsl_fCutOffMax = plsLight->ls_fSpotCutOffOuter;
                   sLightData.wsl_uType = (UINT)eType;
 
                   // Update UBO

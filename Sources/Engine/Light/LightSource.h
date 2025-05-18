@@ -32,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define LSF_NONPERSISTENT           (1L<<5)   // not saved (can change during game)
 #define LSF_LENSFLAREONLY           (1L<<6)   // no light, only lens flare
 #define LSF_DYNAMIC                 (1L<<7)   // dynamic light (fast frequent caching, no shadows)
+#define LSF_SPOTLIGHT               (1L<<8)   // spot light (projector, shader pipleine only)
 
 class ENGINE_API CLightSource
 {
@@ -48,6 +49,8 @@ public:
 
   RANGE ls_rHotSpot;                // distance before intensity starts to fall off
   RANGE ls_rFallOff;                // distance before intensity reaches zero
+  ANGLE ls_fSpotCutOffInner;        // spot-light cut off inner angle
+  ANGLE ls_fSpotCutOffOuter;        // spot-light cut off outer angle
 
   COLOR ls_colColor;                // light color
   COLOR ls_colAmbient;              // ambient color (for directional lights only)

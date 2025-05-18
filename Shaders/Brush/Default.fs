@@ -115,6 +115,37 @@ vec3 calculatePointLight(vec3 fragPos, vec3 fragNormal, Light light, bool calcDi
     return light.color.rgb * (diffuse + specular) * attenuation;
 }
 
+vec3 calculateSpotLight(vec3 fragPos, vec3 fragNormal, Light light, float specInstensity, float shininess)
+{
+    // Fragment-light vector
+    vec3 toLight = light.position.xyz - fragPos;
+
+    // Fragment-light normalized vector (direction)
+    vec3 lightDir = normalize(toLight);
+
+    // Light orientation vector
+    vec3 lightOrientation = normalize(light.direction.xyz);
+
+    // Calc angle attenuation
+    float angleAttenuation = 0.0f;
+
+    float angle = acos(dot(-lightDir, lightOrientation));
+    float angleMin = radians(light.cutOffMin);
+    float angleMax = radians(light.cutOffMax);
+
+    if(angle < angleMin)
+    {
+        angleAttenuation = 1.0f;
+    }
+    else if(angle > angleMin && angle < angleMax)
+    {
+        float m = (min(angle, angleMax) - angleMin) / (angleMax - angleMin);
+        angleAttenuation = mix(1.0f, 0.0f, m);
+    }
+
+    return calculatePointLight(fragPos, fragNormal, light, true, specInstensity, shininess) * angleAttenuation;
+}
+
 vec3 calculateDirectional(vec3 fragPos, vec3 fragNormal, Light light, float specInstensity, float shininess)
 {
     // Directional to light
@@ -283,6 +314,15 @@ void main()
                 case LT_DIRECTIONAL:
                     lighting += calculateDirectional(
                         fs_in.position,
+                        normal, 
+                        lights[i], 
+                        specIntensity, 
+                        shininess);
+                break;
+
+                case LT_SPOT:
+                    lighting += calculateSpotLight(
+                        fs_in.position, 
                         normal, 
                         lights[i], 
                         specIntensity, 
