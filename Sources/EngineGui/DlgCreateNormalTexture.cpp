@@ -223,7 +223,7 @@ void CDlgCreateNormalTexture::OnPaint()
   }
 }
 
-#define MAX_ALLOWED_MEX_SIZE 32*1024*1024
+#define MAX_ALLOWED_MEX_SIZE 32*2048*2048
 
 BOOL CDlgCreateNormalTexture::OnInitDialog() 
 {

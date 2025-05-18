@@ -180,7 +180,7 @@ typedef ULONG   COLOR;  // color is always in 32 bit true-color format
 #define _TY412_    0xF000F000
 
 // some mexels constants
-#define MAX_MEX_LOG2 10
+#define MAX_MEX_LOG2 11
 #define MIN_MEX_LOG2  0
 #define MAX_MEX     (1L<<MAX_MEX_LOG2)
 #define MIN_MEX     (1L<<MIN_MEX_LOG2)
