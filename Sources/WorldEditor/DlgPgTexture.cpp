@@ -290,6 +290,8 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
 
       CMappingDefinitionUI mdui;
       bpo.bpo_abptTextures[pDoc->m_iTexture].bpt_mdMapping.ToUI( mdui);
+      mdui.mdui_fHeightScale = bpo.bpo_fHeightScale;
+
       if( m_bOffsetU) mdui.mdui_fUOffset = m_fOffsetU;
       if( m_bOffsetV) mdui.mdui_fVOffset = m_fOffsetV;
       if( m_bRotationU) mdui.mdui_aURotation = m_fRotationU;

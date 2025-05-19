@@ -556,6 +556,7 @@ void CBrushSector::TriangularizeMarkedPolygons( void)
       bpoNew.bpo_abptTextures[5].CopyTextureProperties( itbpo->bpo_abptTextures[5], TRUE);
 
       bpoNew.bpo_colColor         = itbpo->bpo_colColor;
+      bpoNew.bpo_fHeightScale     = itbpo->bpo_fHeightScale;
       bpoNew.bpo_ulFlags          = itbpo->bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew.bpo_colShadow        = itbpo->bpo_colShadow;
       bpoNew.bpo_bppProperties    = itbpo->bpo_bppProperties;
@@ -794,6 +795,7 @@ void CBrushSector::SubdivideTriangles( CBrushPolygonSelection &selPolygon)
       bpoNew.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
 
       bpoNew.bpo_colColor         = bpoOld.bpo_colColor;
+      bpoNew.bpo_fHeightScale     = itbpo->bpo_fHeightScale;
       bpoNew.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew.bpo_colShadow        = bpoOld.bpo_colShadow;
       bpoNew.bpo_bppProperties    = bpoOld.bpo_bppProperties;
@@ -910,6 +912,7 @@ void CBrushSector::SubdivideTriangles( CBrushPolygonSelection &selPolygon)
       bpoNew1.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
       bpoNew1.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
       bpoNew1.bpo_colColor         = bpoOld.bpo_colColor;
+      bpoNew1.bpo_fHeightScale     = bpoOld.bpo_fHeightScale;
       bpoNew1.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew1.bpo_colShadow        = bpoOld.bpo_colShadow;
       bpoNew1.bpo_bppProperties    = bpoOld.bpo_bppProperties;
@@ -950,6 +953,7 @@ void CBrushSector::SubdivideTriangles( CBrushPolygonSelection &selPolygon)
       bpoNew2.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
       bpoNew2.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
       bpoNew2.bpo_colColor         = bpoOld.bpo_colColor;
+      bpoNew2.bpo_fHeightScale     = bpoOld.bpo_fHeightScale;
       bpoNew2.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew2.bpo_colShadow        = bpoOld.bpo_colShadow;
       bpoNew2.bpo_bppProperties    = bpoOld.bpo_bppProperties;
@@ -990,6 +994,7 @@ void CBrushSector::SubdivideTriangles( CBrushPolygonSelection &selPolygon)
       bpoNew3.bpo_abptTextures[4].CopyTextureProperties( bpoOld.bpo_abptTextures[4], TRUE);
       bpoNew3.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
       bpoNew3.bpo_colColor         = bpoOld.bpo_colColor;
+      bpoNew3.bpo_fHeightScale     = bpoOld.bpo_fHeightScale;
       bpoNew3.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew3.bpo_colShadow        = bpoOld.bpo_colShadow;
       bpoNew3.bpo_bppProperties    = bpoOld.bpo_bppProperties;
@@ -1178,6 +1183,7 @@ void CBrushSector::ReTriple( CBrushPolygonSelection &selPolygon)
       bpoNew.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
 
       bpoNew.bpo_colColor         = bpoOld.bpo_colColor;
+      bpoNew.bpo_fHeightScale     = bpoOld.bpo_fHeightScale;
       bpoNew.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
       bpoNew.bpo_colShadow        = bpoOld.bpo_colShadow;
       bpoNew.bpo_bppProperties    = bpoOld.bpo_bppProperties;
@@ -1305,6 +1311,7 @@ void CBrushSector::ReTriple( CBrushPolygonSelection &selPolygon)
     bpoNew.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
 
     bpoNew.bpo_colColor         = bpoOld.bpo_colColor;
+    bpoNew.bpo_fHeightScale     = bpoOld.bpo_fHeightScale;
     bpoNew.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
     bpoNew.bpo_colShadow        = bpoOld.bpo_colShadow;
     bpoNew.bpo_bppProperties    = bpoOld.bpo_bppProperties;
@@ -1351,6 +1358,7 @@ void CBrushSector::ReTriple( CBrushPolygonSelection &selPolygon)
     bpoNew.bpo_abptTextures[5].CopyTextureProperties( bpoOld.bpo_abptTextures[5], TRUE);
 
     bpoNew.bpo_colColor         = bpoOld.bpo_colColor;
+    bpoNew.bpo_fHeightScale     = bpoOld.bpo_fHeightScale;
     bpoNew.bpo_ulFlags          = bpoOld.bpo_ulFlags & ~(BPOF_MARKED_FOR_USE|BPOF_SELECTED);
     bpoNew.bpo_colShadow        = bpoOld.bpo_colShadow;
     bpoNew.bpo_bppProperties    = bpoOld.bpo_bppProperties;
