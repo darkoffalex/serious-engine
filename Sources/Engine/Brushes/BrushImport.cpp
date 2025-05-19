@@ -188,6 +188,8 @@ void CBrushSector::FromObjectSector_t(CObjectSector &osc) // throw char *
     opo.opo_Index = iPolygon;
     // set polygon color
     bpo.bpo_colColor = opo.opo_colorColor;
+    // set height scale (shader pipeline only)
+    bpo.bpo_fHeightScale = opo.opo_fHeightScale;
     // set polygon mapping
     bpo.bpo_abptTextures[0].bpt_mdMapping = opo.opo_amdMappings[0];
     bpo.bpo_abptTextures[1].bpt_mdMapping = opo.opo_amdMappings[1];

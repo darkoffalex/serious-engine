@@ -713,6 +713,9 @@ CScreenPolygon *CRenderer::MakeScreenPolygon(CBrushPolygon &bpo)
   SetOneMaterialTextureParameters(bpo, sppo, 1);
   SetOneMaterialTextureParameters(bpo, sppo, 2);
 
+  // set height map scale multiplier
+  sppo.spo_fHeightScale = bpo.bpo_fHeightScale;
+
   // clear polygon flags
   sppo.spo_ulFlags = 0;
   if (_wrpWorldRenderPrefs.wrp_ftPolygons != CWorldRenderPrefs::FT_TEXTURE) {

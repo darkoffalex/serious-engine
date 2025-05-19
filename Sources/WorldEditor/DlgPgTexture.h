@@ -52,6 +52,7 @@ public:
 	CString	m_strTextureFile;
 	float	m_fOffsetV;
 	float	m_fOffsetU;
+	float   m_fHeightScale;
 	int		m_radioTexture;
 	float	m_fRotationU;
 	float	m_fRotationV;
@@ -61,13 +62,14 @@ public:
 	CString	m_strTextureDim;
 	//}}AFX_DATA
 	
-  BOOL m_bOffsetV;
+    BOOL m_bOffsetV;
 	BOOL m_bOffsetU;
 	BOOL m_bRotationU;
 	BOOL m_bRotationV;
 	BOOL m_bStrength;
 	BOOL m_bStretchU;
 	BOOL m_bStretchV;
+	BOOL m_bHeightScale;
 
 
 // Overrides

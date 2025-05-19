@@ -192,7 +192,7 @@ vec2 parallaxOcclusionMapping(vec2 uv, vec3 viewDirTangent, int numStepsMin, int
     // Initialize ray marching
     float layerDepth = 1.0f / float(numSteps);                 // One layer depth (step size)
     float safeZ = max(abs(viewDirTangent.z), 0.0001);
-    vec2 deltaUV = viewDirTangent.xy * HM_SCALE / safeZ;             // Full UV displacement, scaled by height scale
+    vec2 deltaUV = viewDirTangent.xy * heightScale / safeZ;          // Full UV displacement, scaled by height scale
     vec2 currentUV = uv;                                             // Start from current UV
     float currentDepth = 1.0f;                                       // Start from max depth (z = height scale)
     float lastSampledHeight = height;                                // Last sampled height

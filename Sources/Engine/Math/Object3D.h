@@ -184,10 +184,11 @@ public:
   CMappingDefinition opo_amdMappings[7];          // mapping of textures on this polygon
   ULONG opo_ulFlags;                              // various flags
   COLOR opo_colorColor;                           // color of this polygon
+  FLOAT opo_fHeightScale;                         // height map scale (shader pipeline)
   void *opo_pvOriginal;                           // used for format conversions
 
   /* Default constructor. */
-  inline CObjectPolygon(void) : opo_Material(NULL), opo_ulFlags(0), opo_pvOriginal(NULL)
+  inline CObjectPolygon(void) : opo_Material(NULL), opo_ulFlags(0), opo_pvOriginal(NULL), opo_fHeightScale(0.0f)
     { memset(&opo_ubUserData, 0, sizeof(opo_ubUserData)); };
   /* Clear the object. */
   inline void Clear(void) { opo_PolygonEdges.Clear(); };

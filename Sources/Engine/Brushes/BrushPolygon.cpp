@@ -255,6 +255,7 @@ void CBrushPolygon::CopyFromSameSector(CBrushPolygon &bpoOriginal)
   // copy simple data
   bpo_pbplPlane    = bpoOriginal.bpo_pbplPlane;
   bpo_colColor     = bpoOriginal.bpo_colColor;
+  bpo_fHeightScale = bpoOriginal.bpo_fHeightScale;
   bpo_ulFlags      = bpoOriginal.bpo_ulFlags;
   BOOL bCopyMapping = TRUE;
   bpo_abptTextures[0].CopyTextureProperties( bpoOriginal.bpo_abptTextures[0], bCopyMapping);
@@ -276,6 +277,7 @@ CBrushPolygon &CBrushPolygon::CopyProperties(CBrushPolygon &bpoOther, BOOL bCopy
   bpo_ulFlags |= (bpoOther.bpo_ulFlags&BPOF_MASK_FOR_COPYING);
   bpo_bppProperties = bpoOther.bpo_bppProperties;
   bpo_colShadow = bpoOther.bpo_colShadow;
+  bpo_fHeightScale = bpoOther.bpo_fHeightScale;
   bpo_abptTextures[0].CopyTextureProperties( bpoOther.bpo_abptTextures[0], bCopyMapping);
   bpo_abptTextures[1].CopyTextureProperties( bpoOther.bpo_abptTextures[1], bCopyMapping);
   bpo_abptTextures[2].CopyTextureProperties( bpoOther.bpo_abptTextures[2], bCopyMapping);
@@ -291,6 +293,7 @@ CBrushPolygon &CBrushPolygon::CopyPropertiesWithoutTexture(CBrushPolygon &bpoOth
   bpo_ulFlags |= (bpoOther.bpo_ulFlags&BPOF_MASK_FOR_COPYING);
   bpo_bppProperties = bpoOther.bpo_bppProperties;
   bpo_colShadow = bpoOther.bpo_colShadow;
+  bpo_fHeightScale = bpoOther.bpo_fHeightScale;
   return *this;
 };
 
@@ -302,6 +305,7 @@ CBrushPolygon &CBrushPolygon::CopyTextures(CBrushPolygon &bpoOther) {
   bpo_abptTextures[3].CopyTextureProperties( bpoOther.bpo_abptTextures[3], TRUE);
   bpo_abptTextures[4].CopyTextureProperties( bpoOther.bpo_abptTextures[4], TRUE);
   bpo_abptTextures[5].CopyTextureProperties( bpoOther.bpo_abptTextures[5], TRUE);
+  bpo_fHeightScale = bpoOther.bpo_fHeightScale;
   return *this;
 };
 
@@ -513,6 +517,7 @@ CBrushPolygon &CBrushPolygon::CopyPolygon(CBrushPolygon &bp)
   bpo_aiTriangleElements.MoveArray(bp.bpo_aiTriangleElements);
   CopyTextures(bp);
   bpo_colColor=bp.bpo_colColor;
+  bpo_fHeightScale=bp.bpo_fHeightScale;
   bpo_ulFlags=bp.bpo_ulFlags;
   bpo_colShadow=bp.bpo_colShadow;
   bpo_mdShadow=bp.bpo_mdShadow;

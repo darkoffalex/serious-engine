@@ -113,10 +113,8 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
     GetDlgItem( IDC_REFLECTIVE)->EnableWindow( bSelectionExists);
     GetDlgItem( IDC_AFTER_SHADOW)->EnableWindow( bSelectionExists);
     GetDlgItem( IDC_PREVIEW_FRAME)->EnableWindow( bSelectionExists);
-	  m_ctrlCombineColor.EnableWindow( bSelectionExists);
 
     m_comboScroll.EnableWindow( bSelectionExists);
-    m_comboBlend.EnableWindow( bSelectionExists);
 
     GetDlgItem( IDC_RADIO_TEXTURE)->EnableWindow( TRUE);
     GetDlgItem( IDC_TEXTURE_2)->EnableWindow( TRUE);
@@ -124,6 +122,12 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
     GetDlgItem( IDC_RADIO_TEXTURE_SPEC)->EnableWindow(TRUE);
     GetDlgItem( IDC_RADIO_TEXTURE_NORM)->EnableWindow(TRUE);
     GetDlgItem( IDC_RADIO_TEXTURE_HEIGHT)->EnableWindow(TRUE);
+
+    m_ctrlCombineColor.EnableWindow(bSelectionExists && m_radioTexture < 3);
+    m_comboBlend.EnableWindow(bSelectionExists && m_radioTexture < 3);
+    m_checkReflective.EnableWindow(bSelectionExists && m_radioTexture < 3);
+    m_checkAfterShadow.EnableWindow(bSelectionExists && m_radioTexture < 3);
+    GetDlgItem(IDC_HEIGHT_SCALE)->EnableWindow(bSelectionExists && m_radioTexture == 5);
 
     if( !bSelectionExists)
     {
@@ -150,6 +154,7 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
 
         CMappingDefinitionUI mdui;
         bpo.bpo_abptTextures[pDoc->m_iTexture].bpt_mdMapping.ToUI( mdui);
+        mdui.mdui_fHeightScale = bpo.bpo_fHeightScale;
         CTextureData *ptdTexture = (CTextureData *) bpo.bpo_abptTextures[pDoc->m_iTexture].bpt_toTexture.GetData();
         if( ptdTexture == NULL)
         {
@@ -188,6 +193,7 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
           m_fRotationV = mdui.mdui_aVRotation;m_bRotationV = TRUE;
           m_fStretchU = mdui.mdui_fUStretch;  m_bStretchU = TRUE;
           m_fStretchV = mdui.mdui_fVStretch;  m_bStretchV = TRUE;
+          m_fHeightScale = mdui.mdui_fHeightScale; m_bHeightScale = TRUE;
 
           ubFirstScroll = bpo.bpo_abptTextures[pDoc->m_iTexture].s.bpt_ubScroll;
           ubFirstBlend = bpo.bpo_abptTextures[pDoc->m_iTexture].s.bpt_ubBlend;
@@ -200,6 +206,7 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
           if( m_fRotationV != mdui.mdui_aVRotation) m_bRotationV = FALSE;
           if( m_fStretchU != mdui.mdui_fUStretch)  m_bStretchU = FALSE;
           if( m_fStretchV != mdui.mdui_fVStretch)  m_bStretchV = FALSE;
+          if (m_fHeightScale != mdui.mdui_fHeightScale) m_bHeightScale = FALSE;
 
           if( bpo.bpo_abptTextures[pDoc->m_iTexture].s.bpt_ubScroll != ubFirstScroll) bSameScroll = FALSE;
           if( bpo.bpo_abptTextures[pDoc->m_iTexture].s.bpt_ubBlend != ubFirstBlend) bSameBlend = FALSE;
@@ -244,6 +251,7 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
   DDX_SkyFloat(pDX, IDC_STRETCH_V, m_fStretchV, m_bStretchV);
   DDX_SkyFloat(pDX, IDC_ROTATION_U, m_fRotationU, m_bRotationU);
   DDX_SkyFloat(pDX, IDC_ROTATION_V, m_fRotationV, m_bRotationV);
+  DDX_SkyFloat(pDX, IDC_HEIGHT_SCALE, m_fHeightScale, m_bHeightScale);
 
   // if dialog is giving data and control windows are valid
   if( (pDX->m_bSaveAndValidate != FALSE) && IsWindow( m_comboScroll.m_hWnd) )
@@ -288,7 +296,10 @@ void CDlgPgTexture::DoDataExchange(CDataExchange* pDX)
       if( m_bRotationV) mdui.mdui_aVRotation = m_fRotationV;
       if( m_bStretchU) mdui.mdui_fUStretch = m_fStretchU;
       if( m_bStretchV) mdui.mdui_fVStretch = m_fStretchV;
+      if( m_bHeightScale) mdui.mdui_fHeightScale = m_fHeightScale;
+
       bpo.bpo_abptTextures[pDoc->m_iTexture].bpt_mdMapping.FromUI( mdui);
+      bpo.bpo_fHeightScale = mdui.mdui_fHeightScale;
 
       INDEX iScroll = m_comboScroll.GetCurSel();
       if( iScroll != -1) bpo.bpo_abptTextures[pDoc->m_iTexture].s.bpt_ubScroll = (UBYTE)iScroll;

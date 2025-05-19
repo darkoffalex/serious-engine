@@ -364,6 +364,7 @@
 #define IDC_RENDER_HAZE                 1052
 #define IDC_IS_RECEIVING_SHADOWS2       1052
 #define IDC_DOUBLESIDED                 1052
+#define IDC_AFTER_SHADOW3               1052
 #define IDC_HARD                        1053
 #define IDC_HAS_DIRECTIONAL_SHADOWS2    1053
 #define IDC_EXTREME                     1054
@@ -755,6 +756,7 @@
 #define IDC_BR_GS_TEXT                  1265
 #define IDC_BR_FS_TEXT                  1266
 #define IDC_MD_VS_TEXT                  1267
+#define IDC_HEIGHT_SCALE                1267
 #define IDC_MD_GS_TEXT                  1268
 #define IDC_MD_FS_TEXT                  1269
 #define IDC_FBM_PREVIEW_FRAME           1284
@@ -1331,7 +1333,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        257
 #define _APS_NEXT_COMMAND_VALUE         33391
-#define _APS_NEXT_CONTROL_VALUE         1267
+#define _APS_NEXT_CONTROL_VALUE         1268
 #define _APS_NEXT_SYMED_VALUE           111
 #endif
 #endif

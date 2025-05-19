@@ -151,6 +151,7 @@ static inline CObjectPolygon *CreatePieceOfPolygon(
 
   // copy other attributes
   popoPiece->opo_colorColor = opoOriginal.opo_colorColor;
+  popoPiece->opo_fHeightScale = opoOriginal.opo_fHeightScale;
   memcpy(popoPiece->opo_amdMappings, opoOriginal.opo_amdMappings,
     sizeof(opoOriginal.opo_amdMappings));
   popoPiece->opo_ulFlags = opoOriginal.opo_ulFlags;

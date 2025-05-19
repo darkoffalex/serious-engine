@@ -320,11 +320,15 @@ void CBrushSector::Write_t( CTStream *postrm) // throw char *
     bpo.bpo_abptTextures[1].Write_t(*postrm);
     bpo.bpo_abptTextures[2].Write_t(*postrm);
 
-    // read shader pipeline textures information (add block ID first)
+    // write shader pipeline textures information (add block ID first)
     (*postrm).WriteID_t("SNHs");
     bpo.bpo_abptTextures[3].Write_t(*postrm);
     bpo.bpo_abptTextures[4].Write_t(*postrm);
     bpo.bpo_abptTextures[5].Write_t(*postrm);
+    
+    // read shader pipeline height map scale (add block ID first)
+    (*postrm).WriteID_t("SHSs");
+    (*postrm) << bpo.bpo_fHeightScale;
 
     // write other polygon properties
     (*postrm).Write_t(&bpo.bpo_bppProperties, sizeof(bpo.bpo_bppProperties));
@@ -509,6 +513,19 @@ void CBrushSector::Read_t( CTStream *pistrm) // throw char *
       catch (...) 
       {
           CPrintF("Failed to load shader pipeline texture information\n");
+          (*pistrm).SetPos_t((*pistrm).GetPos_t() - CID_LENGTH);
+      }
+
+      // try to read shader pipeline height scale information
+      try
+      {
+          (*pistrm).ExpectID_t("SHSs");
+          (*pistrm) >> bpo.bpo_fHeightScale;
+      }
+      // backward compatibility - skip block if not found, read as old format
+      catch (...)
+      {
+          CPrintF("Failed to load shader pipeline height scale information\n");
           (*pistrm).SetPos_t((*pistrm).GetPos_t() - CID_LENGTH);
       }
 

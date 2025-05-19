@@ -74,6 +74,7 @@ struct ScenePolygon {
   COLOR spo_cColor;        // polygon color (for flat or shadow modes)
   ULONG spo_ulFlags;       // polygon flags (selected or not? ...)
   FLOAT spo_fNearestZ;     // Z coord of nearest vertex to viewer
+  FLOAT spo_fHeightScale;  // height map scale (shader pipeline only)
   void *spo_pvPolygon;     // user data for high level renderer (brush polygon)
 };
 

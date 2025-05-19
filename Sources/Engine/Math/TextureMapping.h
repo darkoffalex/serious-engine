@@ -87,6 +87,7 @@ public:
   FLOAT mdui_fVStretch; // stretch in v direction
   FLOAT mdui_fUOffset;  // offset in u direction
   FLOAT mdui_fVOffset;  // offset in v direction
+  FLOAT mdui_fHeightScale; // height map scale multiplier (shader pipeline)
 };
 
 /*

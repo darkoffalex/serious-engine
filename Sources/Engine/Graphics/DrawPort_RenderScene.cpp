@@ -914,6 +914,13 @@ static void RSPrepareMaterialLayers(ScenePolygon* pspo)
 
         if (pspo->spo_aptoTexturesMtl[iLayer] != NULL)
         {
+            // height map?
+            if (iLayer == 2)
+            {
+                // pass height scale to shader
+                gfxUniform1fv(world->wo_sBrushShaderInfo.gsi_sBrushUniforms.wsu_iHeightScale, 1, &pspo->spo_fHeightScale);
+            }
+
             CTextureData* ptd = (CTextureData*)pspo->spo_aptoTexturesMtl[iLayer]->GetData();
             const INDEX iFrameNo = pspo->spo_aptoTexturesMtl[iLayer]->GetFrame();
 
