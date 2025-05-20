@@ -243,6 +243,8 @@ public:
 
   // get number of shadow layers
   INDEX GetShadowLayersCount(void) { return bsm_lhLayers.Count(); };
+  // get number of shadow layers with specific light falgs
+  INDEX GetShadowLayersCount(ULONG lFlags);
   // get amount of memory used by this object
   SLONG GetUsedMemory(void);
 };

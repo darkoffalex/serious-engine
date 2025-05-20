@@ -18,9 +18,8 @@
 #define MTL_NORMAL          1
 #define MTL_HEIGHT          2
 
-// Height map constants
-// TODO: Maybe need uniform variable for it (can depend on texture & mapping)
-#define HM_SCALE          0.025f
+// Shadow layer opacity
+#define SHADOW_OPACITY      0.9f
 
 // Light source description
 struct Light
@@ -287,6 +286,13 @@ void main()
             normal = normalize(fs_in.TBN * normalTangent);
         }
 
+        float shadowAttenuation = 1.0f;
+        if(bool(useShadow))
+        {
+            float shadow = texture2D(texShadow, fs_in.uv[activeLayers]).r;
+            shadowAttenuation = clamp(shadow + (1.0f - SHADOW_OPACITY), 0.0f, 1.0f);
+        }
+
         for (int i = 0; i < activeLights; i++)
         {
             switch(lights[i].type)
@@ -298,7 +304,7 @@ void main()
                         lights[i], 
                         true, 
                         specIntensity, 
-                        shininess);
+                        shininess) * shadowAttenuation;
                 break;
 
                 case LT_AMBIENT:
@@ -307,8 +313,8 @@ void main()
                         normal, 
                         lights[i], 
                         false, 
-                        specIntensity, 
-                        shininess);
+                        0.0f, 
+                        0.0f);
                 break;
 
                 case LT_DIRECTIONAL:
@@ -317,7 +323,7 @@ void main()
                         normal, 
                         lights[i], 
                         specIntensity, 
-                        shininess);
+                        shininess) * shadowAttenuation;
                 break;
 
                 case LT_SPOT:
@@ -326,14 +332,9 @@ void main()
                         normal, 
                         lights[i], 
                         specIntensity, 
-                        shininess);
+                        shininess) * shadowAttenuation;
                 break;
             }
-        }
-        
-        if(bool(useShadow))
-        {
-            lighting *= texture2D(texShadow, fs_in.uv[activeLayers]).r;
         }
     }
 

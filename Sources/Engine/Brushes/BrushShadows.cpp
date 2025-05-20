@@ -730,7 +730,23 @@ BOOL CBrushShadowMap::IsShadowFlat( COLOR &colFlat)
   return TRUE;
 }
 
+INDEX CBrushShadowMap::GetShadowLayersCount(ULONG lFlags)
+{
+    INDEX iResult = 0;
 
+    if (bsm_lhLayers.Count() > 0)
+    {
+        FOREACHINLIST(CBrushShadowLayer, bsl_lnInShadowMap, bsm_lhLayers, itbsl)
+        {
+            CLightSource* plsLight = itbsl->bsl_plsLightSource;
+            if (plsLight->ls_ulFlags & lFlags) {
+                iResult++;
+            }
+        }
+    }
+
+    return iResult;
+}
 
 // get amount of memory used by this object
 SLONG CBrushShadowMap::GetUsedMemory(void)

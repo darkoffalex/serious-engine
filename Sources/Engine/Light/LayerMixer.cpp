@@ -1010,13 +1010,10 @@ void CLayerMixer::AddOneLayerPoint( CBrushShadowLayer *pbsl, UBYTE *pubMask, UBY
   // If using shaders - only shadows required in shadow-maps (no lighting needed)
   if (pwo->wo_sBrushShaderInfo.gsi_bLoaded)
   {
-      if (pubMask == NULL)
+      // casts shadow?
+      if (!pubMask == NULL)
       {
-          AddConstantLayerIntensity(pbsl->bsl_pbsmShadowMap->GetShadowLayersCount());
-      }
-      else
-      {
-          AddShadowMaskOnly(pubMask, ubMask, pbsl->bsl_pbsmShadowMap->GetShadowLayersCount());
+          AddShadowMaskOnly(pubMask, ubMask, pbsl->bsl_pbsmShadowMap->GetShadowLayersCount(LSF_CASTSHADOWS));
       }
   }
   // For classic (fixed pipeline) also calculate lighting in shadow-maps
